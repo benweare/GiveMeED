@@ -157,6 +157,35 @@ number HowManyFrames( string folder )
 	return nfiles
 }
 
+// writes tags to data file
+void Tag3DEDData( string progname, number start_angle, number end_angle, number total_time, number fps, string rotation_axis, string notes, string DataPath, string ISName )
+{
+	number rotation_range = end_angle - start_angle
+	number exposure = 1 / fps
+	string ImageName = DataPath + "\\"+ ISName + ".dm4"
+	try{
+		image target:=OpenImage(ImageName)
+		TagGroup imgTags = target.ImageGetTagGroup()
+		string bosstag
+		bosstag = "3DED data:"
+		imgTags.TagGroupSetTagAsString( bosstag + "Program", progname )
+		imgTags.TagGroupSetTagAsNumber( bosstag + "Start angle (deg)", start_angle )
+		imgTags.TagGroupSetTagAsNumber( bosstag + "End angle (deg)", end_angle )
+		imgTags.TagGroupSetTagAsNumber( bosstag + "Rotation range (deg)", rotation_range )
+		imgTags.TagGroupSetTagAsNumber( bosstag + "Total time (s)", total_time )
+		imgTags.TagGroupSetTagAsNumber( bosstag + "Frame rate (fps)", fps )
+		imgTags.TagGroupSetTagAsNumber( bosstag + "Exposure (s)", exposure )
+		imgTags.TagGroupSetTagAsString( bosstag + "Rotation axis (deg)", rotation_axis )
+		imgTags.TagGroupSetTagAsString( bosstag + "Notes", notes )
+		
+		CloseImage( target )
+	}
+	catch{
+		result( "Something went wrong. Tags not written to image." + "\n" )
+		result(ImageName + "\n" )
+	}
+}
+
 // metadata block
 void CreateLogFile( string fileName, string saveName, number camid, number time_1, number time_2, number end_angle, number start_angle, string notes, number fiddle, number cam_sleep, string ISDataPath, number frame_rate, number camera_length )
 {
@@ -258,6 +287,8 @@ void CreateLogFile( string fileName, string saveName, number camid, number time_
 	CloseFile( fileNum )
 	result( "Wrote file: " + fileName )
 	result( "Saved data to: " + saveName + "\n" )
+
+	Tag3DEDData( programe_name, start_angle, end_angle, total_time, frame_rate, rotation_axis, notes, ISDataPath, ISName )
 }
 
 // data collection block
