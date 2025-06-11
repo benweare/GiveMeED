@@ -2,49 +2,45 @@
 GiveMeED v1.0
 
 B L Weare, @NMRC
-Updated: 27-09-24
+Updated: 11-03-25
 
 See attached publication: Weare et al, DOI:
 
-This script is used to collect 3DED data with transmission electron microscopes equipped
-with Gatan cameras that have In-Situ mode. It has been tested with a JEOL2100Plus with OneView
-and JEOL2100F with K3. 
+Please see associated publication for instructions, DOI: 
 
-Notes:
-- Run script from the View window in DigitalMicrograph.
-- Tilt is the alpha axis, which corresponds to tilt-x for a JEOL microscope. Tilt-y is 
-  not affected by this script.
-- The Live View may lag during data collection, but this does not affect the data collection.
-- Microscope must be in Diffraction mode prior to starting data collection or 
-  script will break when trying to write metadata file. 
-- Kill script in DigitalMicrograph: "ctrl + numlock". Back: hold "shift" during tilt.
-- Set up capture parameters from IS side panel. 
 */
-
 //Initialise variables
-number alpha_start = -20 //start stage tilt
-number alpha_end = 20 //end stage tilt
-string save_dir = "X:\\BLW\\GMED Testing\\" //directory to save log file
-string ISName = "IS02"
+number alpha_start = -60 //start stage tilt
+number alpha_end = 60 //end stage tilt
+string save_dir = "X:\\" //directory to save log file, no trailing slash
+string ISName = "sample_name"
 string sample_name = ISName
 string log_ext = ".txt" //file extension for log file
 string ISDataPath = save_dir + ISName
-
-string notes = "No notes" //enter notes here and they are included in the log file
-
+string notes = "[e.g. cryo 120 K]" //enter notes here and they are included in the log file
 string filename, saveName
 number frame_rate = 175 // can't grab from In Situ capture for some reason
 number exp_num = 0 // initial log file suffix
-number fiddle = 1.0 // amount angles can be off by
-number cam_sleep = 0.001 // camera sleep in syncing while loop 
+number fiddle = 1.0 // tolerance in angle
+number cam_sleep = 0.001 // sync while loop
 number fileCheck = 1 
 number start_angle, end_angle 
 number camid = CameraGetActiveCameraID()
-number camera_length = EMGetCameraLength( )
-
+number camera_length
+number lambda // in nm
+	lambda = 0.00251 // 200 kV
+	//lambda = 0.00267 // 180 kV
+	//lambda = 0.00285 // 160 kV
+	//lambda = 0.00307 // 140 kV
+	//lambda = 0.00307 // 120 kV
+	//lambda = 0.00370 // 100 kV
+	//lambda = 0.00418 // 80 kV
+	//lambda = 0.00487 // 60 kV
+	//lambda = 0.00602 // 40 kV
+	//lambda = 0.00859 // 20 kV 
 // Event timing variables
 number time_1, time_2
-
+number false = 0; number true =1
 // Declare functions
 string UniqueSaveName( string save_dir, string &saveName, string fileName, string sample_name, string log_ext, number &exp_num, number fileCheck )
 {
@@ -68,8 +64,7 @@ string UniqueSaveName( string save_dir, string &saveName, string fileName, strin
 	}
 	return saveName
 }
-
-//This block taken from DMscript examples; counts files in folder
+// Counts files in folder
 TagGroup CreateFileList( string folder, number inclSubFolder )
 {
 	TagGroup filesTG = GetFilesInDirectory( folder , 1 )
@@ -106,8 +101,7 @@ TagGroup CreateFileList( string folder, number inclSubFolder )
 	}   
 	return fileList
 }
-
-// Function converts a string to lower-case characters
+// Convert a string to lower-case characters
 string ToLowerCase( string in )
 {
 	string out = ""
@@ -120,8 +114,7 @@ string ToLowerCase( string in )
 	}        
 	return out
 }
-
-// Function removes entries not matching in suffix
+// Removes entries not matching in suffix
 TagGroup FilterFilesList( TagGroup list, string suffix )
 {
 	TagGroup outList = NewTagList()
@@ -133,18 +126,17 @@ TagGroup FilterFilesList( TagGroup list, string suffix )
         {
 			string str = ToLowerCase( origstr )
 			number matches = 1
-			if ( len( str ) >= len( suffix ) )                 // Ensure that the suffix isn't longer than the whole string
+			if ( len( str ) >= len( suffix ) )
 			{
-				if ( suffix == right( str , len( suffix ) ) ) // Compare suffix to end of original string
+				if ( suffix == right( str , len( suffix ) ) )
 				{
-					outList.TagGroupInsertTagAsString( outList.TagGroupCountTags() , origstr )        // Copy if matching
+					outList.TagGroupInsertTagAsString( outList.TagGroupCountTags() , origstr )
 				}
 			}
 		}
 	}
 	return outList
 }
-
 // File counting block - works well for low frame rates
 number HowManyFrames( string folder )
 {
@@ -156,13 +148,13 @@ number HowManyFrames( string folder )
 	nfiles = nfiles - 1//IS data is systematically high due to control file
 	return nfiles
 }
-
-// writes tags to data file
+// Writes tag to images
 void Tag3DEDData( string progname, number start_angle, number end_angle, number total_time, number fps, string rotation_axis, string notes, string DataPath, string ISName )
 {
 	number rotation_range = end_angle - start_angle
 	number exposure = 1 / fps
 	string ImageName = DataPath + "\\"+ ISName + ".dm4"
+	result( ImageName )
 	try{
 		image target:=OpenImage(ImageName)
 		TagGroup imgTags = target.ImageGetTagGroup()
@@ -177,17 +169,16 @@ void Tag3DEDData( string progname, number start_angle, number end_angle, number 
 		imgTags.TagGroupSetTagAsNumber( bosstag + "Exposure (s)", exposure )
 		imgTags.TagGroupSetTagAsString( bosstag + "Rotation axis (deg)", rotation_axis )
 		imgTags.TagGroupSetTagAsString( bosstag + "Notes", notes )
-		
 		CloseImage( target )
 	}
 	catch{
 		result( "Something went wrong. Tags not written to image." + "\n" )
 		result(ImageName + "\n" )
 	}
+	
 }
-
-// metadata block
-void CreateLogFile( string fileName, string saveName, number camid, number time_1, number time_2, number end_angle, number start_angle, string notes, number fiddle, number cam_sleep, string ISDataPath, number frame_rate, number camera_length )
+// Metadata block
+void CreateLogFile( string fileName, string saveName, number camid, number time_1, number time_2, number end_angle, number start_angle, string notes, number fiddle, number cam_sleep, string ISDataPath, number frame_rate, number lambda, number camera_length )
 {
 	string programe_name = "GiveMeED_v1.0"
 	// event timings
@@ -211,29 +202,14 @@ void CreateLogFile( string fileName, string saveName, number camid, number time_
 	// get camera and tem name
 	string camera_name = CameraGetName( camid )
 	string tem_name = "2100Plus"
+	string rotation_axis = "-25.1"
 	number high_tension = EMGetHighTension( ) / 1000 //accelerating voltage in kV
-	
-	number lambda // in nm
-	lambda = 0.00251 // 200 kV
-	//lambda = 0.00267 // 180 kV
-	//lambda = 0.00285 // 160 kV
-	//lambda = 0.00307 // 140 kV
-	//lambda = 0.00307 // 120 kV
-	//lambda = 0.00370 // 100 kV
-	//lambda = 0.00418 // 80 kV
-	//lambda = 0.00487 // 60 kV
-	//lambda = 0.00602 // 40 kV
-	//lambda = 0.00859 // 20 kV 
-	
-	number calib_rot_ax = 334.9
-	
-	image img := GetFrontImage() //no need to close as it is saying it is live view, not making a copy
-	
+	image img := GetFrontImage()
 	number phys_pixelsize_x, phys_pixelsize_y, scale_x, scale_y
 	CameraGetPixelSize(camid, phys_pixelsize_x, phys_pixelsize_y)
 	GetScale( img, scale_x, scale_y )
 	
-	// create log message
+	// create log
 	string log_message = "Program: " + programe_name + "\n"
 	log_message += "Save Location: " + ISDataPath + "\n"
 	log_message += "IS Data: " + saveName + "\n"
@@ -259,71 +235,66 @@ void CreateLogFile( string fileName, string saveName, number camid, number time_
 	log_message += "Exposure (s): " + 1/frame_rate + "\n"
 	log_message += "Number of frames : " + no_frames + "\n"
 	log_message += "Angle per frame (deg): " + no_frames / (end_angle - start_angle) + "\n"
-	log_message += "Rotation axis (deg): " + "-25.1" + "\n"
+	log_message += "Rotation axis (deg): " + rotation_axis + "\n"
 	log_message += "---Notes---" + "\n"
 	log_message += "Notes: " + notes + "\n"
-	log_message += "---CIF---" + "\n"
-	log_message += "data_3DED" + "\n"
-	timestamp = FormatTimeString( GetCurrentTime(), 1 )
-	log_message += "_audit_creation_date " + timestamp + "\n"
-	log_message += "_audit_creation_method " + "'Digital Micrograph'" + "\n"
-	log_message += "_computing_data_collection " + "'Digital Micrograph'" + "\n"
-	log_message += "_diffrn_source " + "'transmission electron microscope'" + "\n"
-	log_message += "_diffrn_radiation_probe " + "electron" + "\n"
-	log_message += "_diffrn_radiation_type " + "'transmission electron microscope'" + "\n"
-	log_message += "_diffrn_radiation_wavelength " + lambda + "\n"
-	log_message += "_diffrn_radiation_monochromator " + "'transmission electron microscope'" + "\n"
-	log_message += "_diffrn_radiation_device " + "'transmission electron microscope'" + "\n"
-	log_message += "_diffrn_radiation_device_type " + "'JEOL 2100Plus'" + "\n"
-	log_message += "_diffrn_detector " + "'CCD'" + "\n"
-	log_message += "_diffrn_detector_type '" + camera_name + "'" + "\n"
-	
-	// print log message to console
+	// Optional CIF formatting
+	//log_message += "---CIF---" + "\n"
+	//log_message += "data_3DED" + "\n"
+	//timestamp = FormatTimeString( GetCurrentTime(), 1 )
+	//log_message += "_audit_creation_date " + timestamp + "\n"
+	//log_message += "_audit_creation_method " + "'Digital Micrograph'" + "\n"
+	//log_message += "_computing_data_collection " + "'Digital Micrograph'" + "\n"
+	//log_message += "_diffrn_source " + "'transmission electron microscope'" + "\n"
+	//log_message += "_diffrn_radiation_probe " + "electron" + "\n"
+	//log_message += "_diffrn_radiation_type " + "'transmission electron microscope'" + "\n"
+	//log_message += "_diffrn_radiation_wavelength " + lambda + "\n"
+	//log_message += "_diffrn_radiation_monochromator " + "'transmission electron microscope'" + "\n"
+	//log_message += "_diffrn_radiation_device " + "'transmission electron microscope'" + "\n"
+	//log_message += "_diffrn_radiation_device_type " + "'JEOL 2100Plus'" + "\n"
+	//log_message += "_diffrn_detector " + "'CMOS'" + "\n"
+	//log_message += "_diffrn_detector_type '" + camera_name + "'" + "\n"
+	// print log to console
 	result( "\n ===== \n" )
 	result( log_message )
-	// write log message to file
+	// write log to file
 	number fileNum = CreateFileForWriting( saveName )
 	WriteFile( fileNum, log_message )
 	CloseFile( fileNum )
 	result( "Wrote file: " + fileName )
 	result( "Saved data to: " + saveName + "\n" )
-
+	
 	Tag3DEDData( programe_name, start_angle, end_angle, total_time, frame_rate, rotation_axis, notes, ISDataPath, ISName )
 }
-
 // data collection block
-void ContinousTilt( number fiddle, number alpha_start, number alpha_end, number &end_angle, number &start_angle, number &time_1, number &time_2, number cam_sleep )
+void ContinousTilt( number fiddle, number alpha_start, number alpha_end, number &end_angle, number &start_angle, number &time_1, number &time_2, number cam_sleep, number &camera_length )
 {
-	EMSetStageAlpha( alpha_start )//tilt to angle alpha_start
-
+	camera_length = EMGetCameraLength()
+	EMSetStageAlpha( alpha_start )
 	while ( abs( EMGetStageAlpha( )- alpha_start ) >= fiddle )
 	{
 		if ( ShiftDown( ) ) exit( 0 )
 	}
-
-	sleep(0.25)//sleeps to settle stage tilt
-	
+	sleep(0.25)//sleeps to settle stage
 	EMSetBeamBlanked(0)//unblank beam
-
-	EMSetStageAlpha( alpha_end )//tilt to alpha_end; issue with syncing tilt start and IS start
-	
+	EMSetStageAlpha( alpha_end )
 	number current_alpha, angle_delta
-	while ( angle_delta < fiddle )//waits until tilt starts, can use a lookback buffer
+	while ( angle_delta < fiddle )//waits until tilt starts
 	{
-		sleep( cam_sleep ) //sleep to prevent DM crash
+		sleep( cam_sleep )
 		current_alpha = EMGetStageAlpha( )
 		angle_delta = abs( current_alpha - start_angle )
 	}
-	CM_InSitu_StartRecord( ) //Start IS capture
-	start_angle = EMGetStageAlpha() // tilt start angle
+	CM_InSitu_StartRecord( ) // start IS capture
+	start_angle = EMGetStageAlpha()
 	result( "IS Acquire" + "\n" )
 	
-	time_1 = GetHighResTickCount( )//measures delay in start of tilt
+	time_1 = GetHighResTickCount( )
 
 	if ( alpha_start > 0 )
-		while ( abs( EMGetStageAlpha( )- alpha_start ) <= abs( ( alpha_start - alpha_end  ) - fiddle ) )//these loops will prevent other commands firing until they done
+		while ( abs( EMGetStageAlpha( )- alpha_start ) <= abs( ( alpha_start - alpha_end  ) - fiddle ) )
 		{
-			if ( ShiftDown( ) ) exit( 0 ) //exit loop if shift is held, as backup to kill script
+			if ( ShiftDown( ) ) exit( 0 ) //exit loop if shift is held
 		}
 	else
 		while ( abs( EMGetStageAlpha( ) - alpha_start ) <= abs( ( alpha_start - alpha_end  ) + fiddle ) )
@@ -331,8 +302,8 @@ void ContinousTilt( number fiddle, number alpha_start, number alpha_end, number 
 			if ( ShiftDown( ) ) exit( 0 )
 		}
 
-	//End IS capture - maybe add a loop that checks if stage movement has stopped 
-	time_2 = GetHighResTickCount( )//IS takes a couple seconds to stop
+	//End IS capture
+	time_2 = GetHighResTickCount( )
 	CM_InSitu_StopRecord( )
 	result( "IS Cease" + "\n" )
 
@@ -340,7 +311,6 @@ void ContinousTilt( number fiddle, number alpha_start, number alpha_end, number 
 
 	return
 }
-
 // launches threads
 void Invoke( )
 {
@@ -362,7 +332,7 @@ Class data_collection_thread : thread //controls data collection
 	{
 		UniqueSaveName( save_dir, saveName, fileName, sample_name, log_ext, exp_num, fileCheck )
 		ContinousTilt( fiddle, alpha_start, alpha_end, end_angle, start_angle, time_1, time_2, cam_sleep ) 
-		sleep(2.0)//pause to write IS data
+		sleep(5.0)//pause to write IS data
 		CreateLogFile( fileName, saveName, camid, time_1, time_2, end_angle, start_angle, notes, fiddle, cam_sleep, ISDataPath, frame_rate, camera_length ) 
 	}
 }
