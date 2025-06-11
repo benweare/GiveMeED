@@ -2,9 +2,7 @@
 GiveMeED v1.0
 
 B L Weare, @NMRC
-Updated: 11-03-25
-
-See attached publication: Weare et al, DOI:
+Updated: 11-06-25
 
 Please see associated publication for instructions, DOI: 
 
