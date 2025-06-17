@@ -26,6 +26,6 @@ Step-by-step instructions for GiveMeED:
 ## List of Scripts 
 - GiveMeED
 - AutoResRings
-- Import_PETS2_GUI
+- writePETS2import
 
 Some scripts are optionally available without a user interface. 
