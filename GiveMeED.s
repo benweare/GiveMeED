@@ -1,5 +1,5 @@
 /*
-GiveMeTomography
+GiveMeElectronDiffraction
 
 B L Weare, @NMRC
 Updated: 16-16-25
