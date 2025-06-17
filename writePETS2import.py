@@ -6,7 +6,6 @@
 # The script is designed such that most variables can be set up as standard for a given microscope, then the first block of variables can be
 # changed on an experiment-by-experiment basis.
 # A GUI version of this script is available for use with Digital Micrograph.
-# For information on PETS2 see the publication: DOI: Palatinus et al, doi.org:/10.1107/S2052520619007434
 # If you found this script useful please cite: Weare et al, DOI
 #
 #variables
