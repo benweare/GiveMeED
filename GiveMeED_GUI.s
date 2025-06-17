@@ -26,17 +26,17 @@ number fileCheck = 1
 number start_angle, end_angle 
 number camid = CameraGetActiveCameraID()
 number camera_length
-number lambda // in nm
-	lambda = 0.00251 // 200 kV
-	//lambda = 0.00267 // 180 kV
-	//lambda = 0.00285 // 160 kV
-	//lambda = 0.00307 // 140 kV
-	//lambda = 0.00307 // 120 kV
-	//lambda = 0.00370 // 100 kV
-	//lambda = 0.00418 // 80 kV
-	//lambda = 0.00487 // 60 kV
-	//lambda = 0.00602 // 40 kV
-	//lambda = 0.00859 // 20 kV 
+number lambda // in A
+	lambda = 0.0251 // 200 kV
+	//lambda = 0.0267 // 180 kV
+	//lambda = 0.0285 // 160 kV
+	//lambda = 0.0307 // 140 kV
+	//lambda = 0.0307 // 120 kV
+	//lambda = 0.0370 // 100 kV
+	//lambda = 0.0418 // 80 kV
+	//lambda = 0.0487 // 60 kV
+	//lambda = 0.0602 // 40 kV
+	//lambda = 0.0859 // 20 kV 
 // Event timing variables
 number time_1, time_2
 number false = 0; number true =1
