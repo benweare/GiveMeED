@@ -1,7 +1,7 @@
-// Go2Alpha.s
+// Go2Alpha
 // BLW @NMRC, 27-09-24
 //
-// This script creates a GUI in DigitalMicrograph that helps tilting the stage for setting eucentric height.
+// This script creates a UI in DigitalMicrograph that helps tilting the stage for setting eucentric height.
 // Two angles can be defined, "Alpha 1" and "Alpha 2" in degrees. Pressing the correspinding button will move the 
 // microscope stage to the defined angle. The "Tilt Neutral" button will set the stage angle to 0. 
 // Care should be taken by the user that tilting to the defined angle will not cause a stage touch. If in doubt, check the maximum tilt range of your
