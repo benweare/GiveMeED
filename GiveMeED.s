@@ -227,7 +227,7 @@ string format_metadata( string ISDataPath, string saveName, string notes,image i
 	"Frame Rate (fps): " + frame_rate + "\n"+\
 	"Exposure (s): " + 1/frame_rate + "\n"+\
 	"Number of frames : " + no_frames + "\n"+\
-	"Angle per frame (deg): " + no_frames / (end_angle - start_angle) + "\n"+\
+	"Angle per frame (deg): " + abs( end_angle - start_angle ) / no_frames + "\n"+\
 	"Rotation axis (deg): " + rotation_axis + "\n"+\
 	"Notes:" + notes + "\n"+\
 	";"
@@ -253,7 +253,6 @@ void CreateLogFile( string fileName, string saveName, number camid,\
 	// get experiment parameters 
 	number end_angle = EMGetStageAlpha( )
 	number spot_size = EMGetSpotSize( )
-	number rot_per_frame = abs( end_angle - start_angle ) / no_frames
 	number acquisition_time = total_time / no_frames
 	number total_angle = abs( end_angle - start_angle )
 	string timestamp = FormatTimeString( GetCurrentTime(), 33 )
