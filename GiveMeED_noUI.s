@@ -1,10 +1,11 @@
 /*
-GiveMeED
+GiveMeElectronDiffraction
 
 B L Weare, @NMRC
-Updated: 16-06-25
+Updated: 01-07-25
 
-Please see associated publication for instructions, DOI: 
+Associated preprint: https://eprints.nottingham.ac.uk/id/eprint/81612 
+Please consider citing if you found this script useful.
 
 */
 //Initialise variables
@@ -135,7 +136,7 @@ TagGroup FilterFilesList( TagGroup list, string suffix )
 	}
 	return outList
 }
-// File counting block - works well for low frame rates
+// File counting block
 number HowManyFrames( string folder )
 {
 	number input = 1
@@ -176,21 +177,19 @@ void Tag3DEDData( string progname, number start_angle, number end_angle, number 
 	}
 	
 }
-// Formats date for CIF
-string CIF_date_format()
+// Puts date into yyyy-mm-dd
+string format_date()
 {
-	string formatted, day, month, year, date
-	year = right(date, 4)
-	month = mid(date, 3, 2)
-	day = left(date, 2)
-	formatted = year + "-" + month + "-" + day
+	number year, month, day, hour, minute, second, nanosecond
+	DeconstructUTCDate( GetCurrentTime(), year, month, day, hour, minute, second, nanosecond )
+	string formatted = format(year, "%04d") + "-" + format(month, "%02d") + "-" + format(day, "%02d" + "\n")
 	return formatted	
 }
 // Writes metadata string as CIF
 string format_metadata( string ISDataPath, string saveName, string notes,image img,number scale_x,number scale_y,number phys_pixelsize_x,number phys_pixelsize_y,string timestamp,string program_name,number lambda,string tem_name,string camera_name,number high_tension,number spot_size,number camera_length,number start_angle, number end_angle,number total_time,number frame_rate,number no_frames,string rotation_axis )
 {
 	string date
-	date = CIF_date_format()
+	date = format_date()
 	string CIF_3DED = "data_GMED"+"\n"+\
 	"_audit_creation_date " + "?" + "\n+"+\
 	"_audit_creation_method " + "'Created by GMED'" + "\n"+\
