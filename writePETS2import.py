@@ -1,12 +1,7 @@
 # write_PETS2_import.py
 # BLW @ nmRC, 27-09-24
 #
-# This script writes a PETS2 project file. It can be run from DigitalMicrograph, or with a standard Python installation. It is designed to work
-# with In-Situ datasets exported from Digital Micrograph in .tif format.
-# The script is designed such that most variables can be set up as standard for a given microscope, then the first block of variables can be
-# changed on an experiment-by-experiment basis.
-# A GUI version of this script is available for use with Digital Micrograph.
-# If you found this script useful please cite: Weare et al, DOI
+# This script writes a PETS2 project file. It is designed to work with In-Situ datasets exported from Digital Micrograph in .tif format.
 #
 #variables
 alpha = -60 #tiltx at start of series
