@@ -3,15 +3,6 @@
 //
 // This script creates a UI in DigitalMicrograph that is used to create a PETS2 project file. It is designed to work with
 // In-Situ datasets exported from Digital Micrograph in .tif format.
-// Several variables can be edited via in the GUI, which will then be passed to the PETS2 project file that is written
-// when the "Write to file" button is pressed. "Experiment Variables" are expected to vary between 3DED experiments, e.g. 
-// rotation range start angle. "Standard Varaibles" are expected to be consistent between experiments for a given
-// microscope, e.g. wavelength. 
-// Further variables can be added/edited by adding to the "output" string in the "write_to_file" function, 
-// for example beam stop coordinates could be added. 
-// A Python version of this script without a UI is available.
-// See the attached publication DOI: 
-// If you found this script useful please cite: Weare et al, DOI
 //
 //Variables
 number alpha = -60, alphastep = 0.05, nframes = 100, scaleinfo = 0.00584221
