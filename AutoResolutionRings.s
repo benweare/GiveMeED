@@ -3,7 +3,6 @@
 // B L Weare, @NMRC
 // Draws a standard set of resolution rings on the front image
 // Can tweak how many rings & diameter by editing the matrix
-
 //Angstroms to nm-1
 number ConvertToRecNM( number num2convert )
 { 
@@ -11,7 +10,6 @@ number ConvertToRecNM( number num2convert )
 	//result(num2convert + " A = " + convertednum + " nm-1" + "\n")
 	return convertednum
 }
-
 //Create ROI
 void CreateResRing( number radlabel, number radius, number x, number y, number r, number g, number b )
 {
@@ -28,7 +26,6 @@ void CreateResRing( number radlabel, number radius, number x, number y, number r
 	ROISetMoveable( resRing, 0 )
 	ROISetVolatile( resRing, 0 )
 }
-
 //Grab scale from image
 number ScaleInfo( )
 {
@@ -38,7 +35,6 @@ number ScaleInfo( )
 	//result("Scale: " + img_scale + " " + scale_units + "\n")
 	return img_scale
 }
-
 // Using image object as a matrix
 image resolution_rings := [1,7] : {
 	{100},
@@ -50,21 +46,16 @@ image resolution_rings := [1,7] : {
 	{0.6}
 }
 number array_length = ImageGetDimensionSize(Resolution_Rings, 1)//y dimentsion of array
-
 // Script starts here
-
 // User defined centre of pattern
 //number img_center_x = 514
 //number img_center_y = 523
-
 // This block gives geometric centre of image; for Fourier transforms.
 //image img := GetFrontImage()
 number img_center_x = ImageGetDimensionSize(img, 0)/2
 number img_center_y = ImageGetDimensionSize(img, 1)/2
-
 //Colour of rings in RGB
 number rval = 1; number gval = 0; number bval = 0
-
  for (number i = 0; i < array_length ; i++ )//less than length of array
 {
 	try
