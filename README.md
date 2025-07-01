@@ -6,11 +6,11 @@ GiveMeED has been used successfully with a JEOL 2100Plus TEM with Gatan OneView 
 
 ## Reference 
 These scripts are associated with the following publicatons, please include a citation in your own works if you found these scripts useful: 
-[Citation here]
+https://eprints.nottingham.ac.uk/id/eprint/81612
 
 ## Usage Instructions for GiveMeED
 
-Please see DOI: [citation] for greater context. 
+Please see the associated preprint for greater context: https://eprints.nottingham.ac.uk/id/eprint/81612 
 
 When “Start 3DED” is pressed, GiveMeED rotates the TEM stage to the value entered in the “Start Angle” field. The beam blank is turned off and the camera begins recording data while the stage is rotated to the value entered in the “End Angle” field. Once rotation ends the beam is blanked and all data is saved. Pressing “Abort 3DED” will blank the beam and stop the camera recording. 3DED metadata is saved with the name entered in the “Sample name” field at the path entered in the “Path” field. The values in the “Variables” container are for later reference and do not affect data collection. The recorded metadata is a mixture of information pulled from the microscope during data collection and standard values that can be defined in the script. Modifying the metadata file to include/exclude information can be done by adding/removing lines in the “log_message” string.
 
