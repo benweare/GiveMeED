@@ -1,14 +1,15 @@
-// Go2Alpha
-// BLW @NMRC, 27-09-24
-//
-// This script creates a UI in DigitalMicrograph that helps tilting the stage for setting eucentric height.
-// Two angles can be defined, "Alpha 1" and "Alpha 2" in degrees. Pressing the correspinding button will move the 
-// microscope stage to the defined angle. The "Tilt Neutral" button will set the stage angle to 0. 
-// Care should be taken by the user that tilting to the defined angle will not cause a stage touch. If in doubt, check the maximum tilt range of your
-// stage before using this script.
-// Alpha refers to the tilt-x axis in a JEOL microscope. This script does not control the Beta tilt axis in double-tilt holders. 
-// If you found this script useful, consider citing the attached publication: Weare et al, DOI:
-//
+/* 
+ Go2Alpha
+ BLW @NMRC
+
+ This script creates a UI in DigitalMicrograph that helps tilting the stage for setting eucentric height.
+ Two angles can be defined, "Alpha 1" and "Alpha 2" in degrees. Pressing the correspinding button will move the 
+ microscope stage to the defined angle. The "Tilt Neutral" button will set the stage angle to 0. 
+ Care should be taken by the user that tilting to the defined angle will not cause a stage touch. If in doubt, check the maximum tilt range of your
+ stage before using this script.
+ Alpha refers to the tilt-x axis in a JEOL microscope. This script does not control the Beta tilt axis in double-tilt holders. 
+ If you found this script useful, consider citing the attached publication: Weare et al, DOI:
+*/
 //Variables
 number target_alpha
 
