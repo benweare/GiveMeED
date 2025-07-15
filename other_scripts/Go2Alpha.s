@@ -8,7 +8,7 @@
  Care should be taken by the user that tilting to the defined angle will not cause a stage touch. If in doubt, check the maximum tilt range of your
  stage before using this script.
  Alpha refers to the tilt-x axis in a JEOL microscope. This script does not control the Beta tilt axis in double-tilt holders. 
- If you found this script useful, consider citing the attached publication: Weare et al, DOI:
+ If you found this script useful, consider citing: http://arxiv.org/abs/2507.10247
 */
 //Variables
 number target_alpha
