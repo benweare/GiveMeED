@@ -1,10 +1,8 @@
 /*
 GiveMeElectronDiffraction
-
 B L Weare, @NMRC
-Updated: 01-07-25
 
-Associated preprint: https://eprints.nottingham.ac.uk/id/eprint/81612 
+Associated preprint for greater context: http://arxiv.org/abs/2507.10247
 Please consider citing if you found this script useful.
 
 */
