@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Weare
+    given-names: Benjamin L
+    orcid: https://orcid.org/0000-0003-4209-2604
+title: "GiveMeED"
+identifiers:
+date-released: 15-Jul-25
+url: https://github.com/benweare/EM_scripts
+preferred-citation:
+	title: "Practical Crystallography with a Transmission Electron Microscope"
+	url: https://arxiv.org/abs/2507.10247
+	doi: 10.48550/ARXIV.2507.10247
+	publisher: "arXiv"
+	authors:
+	- family-names: Weare
+	  given-names: Benjamin L
+	  orcid: https://orcid.org/0000-0003-4209-2604
+	- family-names: Fung
+	  given-names: Kayleigh L Y
+	  - family-names: Cardillo-Zallo
+	  given-names: Ian
+	  - family-names: Cull
+	  given-names: William J
+	  - family-names: Fay
+	  given-names: Michael W
+	  - family-names: Argent
+	  given-names: Stephen P
+	  - family-names: Brown
+	  given-names: Paul D
+	date: 2025
+}
