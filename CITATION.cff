@@ -14,19 +14,19 @@ preferred-citation:
  doi: 10.48550/ARXIV.2507.10247
  date-released: 2025-15-07
  authors:
-   - family-names: Weare
-     given-names: Benjamin L
-     orcid: https://orcid.org/0000-0003-4209-2604
-   - family-names: Fung
-     given-names: Kayleigh L Y
-   - family-names: Cardillo-Zallo
-     given-names: Ian
-   - family-names: Cull
-     given-names: William J
-    - family-names: Fay
-      given-names: Michael W
-   - family-names: Argent
-     given-names: Stephen P
-   - family-names: Brown
-     given-names: Paul D
+   - family-names: "Weare"
+     given-names: "Benjamin L"
+     orcid: "https://orcid.org/0000-0003-4209-2604"
+   - family-names: "Fung"
+     given-names: "Kayleigh L Y"
+   - family-names: "Cardillo-Zallo"
+     given-names: "Ian"
+   - family-names: "Cull"
+     given-names: "William J"
+    - family-names: "Fay"
+      given-names: "Michael W"
+   - family-names: "Argent"
+     given-names: "Stephen P"
+   - family-names: "Brown"
+     given-names: "Paul D"
  publisher: "arXiv"
