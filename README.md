@@ -6,7 +6,7 @@ GiveMeED has been used successfully with a JEOL 2100Plus TEM with Gatan OneView 
 
 ## Reference 
 These scripts are associated with the following publicatons, please include a citation in your own works if you found these scripts useful: 
-https://eprints.nottingham.ac.uk/id/eprint/81612
+http://arxiv.org/abs/2507.10247
 
 ## Usage Instructions for GiveMeED
 
