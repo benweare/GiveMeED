@@ -190,7 +190,7 @@ string format_metadata( string ISDataPath, string saveName, string notes,image i
 	string date
 	date = format_date()
 	string CIF_3DED = "data_GMED"+"\n"+\
-	"_audit_creation_date " + "?" + "\n+"+\
+	"_audit_creation_date " + "?" + "\n"+\
 	"_audit_creation_method " + "'Created by GMED'" + "\n"+\
 	"_computing_data_collection " + program_name + "\n"+\
 	"_diffrn_source 'LaB6'\n"+\
