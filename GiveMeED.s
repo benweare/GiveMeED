@@ -62,6 +62,21 @@ string UniqueSaveName( string save_dir, string &saveName, string fileName, strin
 	}
 	return saveName
 }
+// actual camera length based on image pixel size
+//number calcualte_camera_length(, number distance, number lamb, number size )
+//{ 
+//	number cam_length_1x_bin, cam_length_2x_bin, cam_length_4x_bin
+//	distance = (1/distance)*1e-9
+//	size = size*1e-9
+//	// camera length in metres 
+//	cam_length_1x_bin = (distance * size) / lamb
+//	
+//	cam_length_2x_bin = cam_length_1x_bin / 2
+//	cam_length_4x_bin = cam_length_1x_bin / 4
+//	
+//	return
+//}
+calculate_camera_length( 0.074319, 0.00251, 15 )
 // Counts files in folder
 TagGroup CreateFileList( string folder, number inclSubFolder )
 {
@@ -248,7 +263,7 @@ void CreateLogFile( string fileName, string saveName, number camid,\
 		no_frames = -1 //total number of frames
 	}
 	// get experiment parameters 
-	number end_angle = EMGetStageAlpha( )
+	//number end_angle = EMGetStageAlpha( )
 	number spot_size = EMGetSpotSize( )
 	number acquisition_time = total_time / no_frames
 	number total_angle = abs( end_angle - start_angle )
@@ -318,6 +333,7 @@ void ContinousTilt( number fiddle, number alpha_start, number alpha_end, number 
 		}
 
 	//End IS capture
+	end_angle = EMGetStageAlpha( )
 	time_2 = GetHighResTickCount( )
 	CM_InSitu_StopRecord( )
 	result( "IS Cease" + "\n" )
