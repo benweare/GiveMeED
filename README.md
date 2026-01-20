@@ -10,7 +10,7 @@ http://arxiv.org/abs/2507.10247
 
 ## Usage Instructions for GiveMeED
 
-<img src="https://github.com/benweare/GiveMeED/blob/main/assets/GUI.png" width="200" alt="Graphical User Interface" />
+<img src="https://github.com/benweare/GiveMeED/blob/main/assets/GUI.png" width="400" alt="Graphical User Interface" />
 
 Please see the associated preprint for greater context: http://arxiv.org/abs/2507.10247
 
