@@ -76,7 +76,7 @@ string UniqueSaveName( string save_dir, string &saveName, string fileName, strin
 //	
 //	return
 //}
-calculate_camera_length( 0.074319, 0.00251, 15 )
+//calculate_camera_length( 0.074319, 0.00251, 15 )
 // Counts files in folder
 TagGroup CreateFileList( string folder, number inclSubFolder )
 {
@@ -242,7 +242,7 @@ string format_metadata( string ISDataPath, string saveName, string notes,image i
 	"Angle per frame (deg): " + abs( end_angle - start_angle ) / no_frames + "\n"+\
 	"Rotation axis (deg): " + rotation_axis + "\n"+\
 	"Notes:" + notes + "\n"+\
-	";"
+	";\n"
 	return( CIF_3DED )
 }
 // Metadata block
