@@ -25,17 +25,7 @@ number fileCheck = 1
 number start_angle, end_angle 
 number camid = CameraGetActiveCameraID()
 number camera_length
-number lambda // in A
-	lambda = 0.0251 // 200 kV
-	//lambda = 0.0267 // 180 kV
-	//lambda = 0.0285 // 160 kV
-	//lambda = 0.0307 // 140 kV
-	//lambda = 0.0307 // 120 kV
-	//lambda = 0.0370 // 100 kV
-	//lambda = 0.0418 // 80 kV
-	//lambda = 0.0487 // 60 kV
-	//lambda = 0.0602 // 40 kV
-	//lambda = 0.0859 // 20 kV 
+number lambda = CalculateWavelength( number HT ) *1e10 // in Angstroms
 // Event timing variables
 number time_1, time_2
 number false = 0; number true =1
@@ -61,6 +51,20 @@ string UniqueSaveName( string save_dir, string &saveName, string fileName, strin
 		result( "Something went wrong." )
 	}
 	return saveName
+}
+// Calculate the wavelength given the accelerating voltage, in metres.
+number CalculateWavelength( number HT )
+{
+	//EMGetHighTension( ) / 1000
+	number c = 299792458
+	number h = 6.62607015e-34
+	number e = 1.602176634e-19
+	number m_e = 9.1093837139e-31
+	
+	number E_k = HT*e
+	number lamb = h/(2*m_e*E_k*(1+(E_k/(2*m_e*(c**2)))))**0.5
+
+	return lamb
 }
 // actual camera length based on image pixel size
 //number calcualte_camera_length(, number distance, number lamb, number size )
