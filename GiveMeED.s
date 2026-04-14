@@ -7,6 +7,38 @@ Please consider citing if you found this script useful.
 
 */
 
+// Calculate the wavelength given the accelerating voltage, in metres.
+number CalculateWavelength( number HT )
+{
+	//EMGetHighTension( ) / 1000
+	number c = 299792458
+	number h = 6.62607015e-34
+	number e = 1.602176634e-19
+	number m_e = 9.1093837139e-31
+	
+	number E_k = HT*e
+	number lamb = h/(2*m_e*E_k*(1+(E_k/(2*m_e*(c**2)))))**0.5
+
+	return lamb
+}
+//Grab scale from image
+number ScaleInfo( )
+{
+	image img := GetFrontImage()
+	number img_scale = ImageGetDimensionScale(img, 0)
+	string scale_units = ImageGetDimensionUnitString(img, 0)
+	//result("Scale: " + img_scale + " " + scale_units + "\n")
+	return img_scale
+}
+// Grab image center.
+void get_image_center( number &x, number &y )
+{
+	image img = GetFrontImage()
+	x = ImageGetDimensionSize(img, 0)/2
+	y = ImageGetDimensionSize(img, 1)/2
+	return
+}
+
 //Initialise variables
 number alpha_start = -60 //start stage tilt
 number alpha_end = 60 //end stage tilt
@@ -25,12 +57,24 @@ number fileCheck = 1
 number start_angle, end_angle 
 number camid = CameraGetActiveCameraID()
 number camera_length
-number lambda = CalculateWavelength( number HT ) *1e10 // in Angstroms
+number HT = EMGetHighTension()
+number lambda = CalculateWavelength( HT ) *1e10 // in Angstroms
+
+number img_center_x, img_center_y
+get_image_center( img_center_x, img_center_y )
+
+number axis_value = 0
+
+string program_name = "GiveMeED"
+string microscope_name = "JEOL 2100Plus transmission electron microscope"
+string camera_name = "Gatan OneView"
+
 // Event timing variables
 number time_1, time_2
 number false = 0; number true =1
 // Declare functions
-string UniqueSaveName( string save_dir, string &saveName, string fileName, string sample_name, string log_ext, number &exp_num, number fileCheck )
+string UniqueSaveName( string save_dir, string &saveName, string fileName, string sample_name,\
+						string log_ext, number &exp_num, number fileCheck )
 {
 	try
 	{
@@ -51,20 +95,6 @@ string UniqueSaveName( string save_dir, string &saveName, string fileName, strin
 		result( "Something went wrong." )
 	}
 	return saveName
-}
-// Calculate the wavelength given the accelerating voltage, in metres.
-number CalculateWavelength( number HT )
-{
-	//EMGetHighTension( ) / 1000
-	number c = 299792458
-	number h = 6.62607015e-34
-	number e = 1.602176634e-19
-	number m_e = 9.1093837139e-31
-	
-	number E_k = HT*e
-	number lamb = h/(2*m_e*E_k*(1+(E_k/(2*m_e*(c**2)))))**0.5
-
-	return lamb
 }
 // actual camera length based on image pixel size
 //number calcualte_camera_length(, number distance, number lamb, number size )
@@ -166,7 +196,9 @@ number HowManyFrames( string folder )
 	return nfiles
 }
 // Writes tag to images
-void Tag3DEDData( string progname, number start_angle, number end_angle, number total_time, number fps, string rotation_axis, string notes, string DataPath, string ISName )
+void Tag3DEDData( string progname, number start_angle, number end_angle,\
+				number total_time, number fps, string rotation_axis, string notes,\
+				string DataPath, string ISName )
 {
 	number rotation_range = end_angle - start_angle
 	number exposure = 1 / fps
@@ -204,7 +236,11 @@ string format_date()
 	return formatted	
 }
 // Writes metadata string as CIF
-string format_metadata( string ISDataPath, string saveName, string notes,image img,number scale_x,number scale_y,number phys_pixelsize_x,number phys_pixelsize_y,string timestamp,string program_name,number lambda,string tem_name,string camera_name,number high_tension,number spot_size,number camera_length,number start_angle, number end_angle,number total_time,number frame_rate,number no_frames,string rotation_axis )
+string format_metadata( string ISDataPath, string saveName, string notes,image img,number scale_x,\
+						number scale_y,number phys_pixelsize_x,number phys_pixelsize_y,string timestamp,\
+						string program_name,number lambda,string tem_name,string camera_name,number high_tension,\
+						number spot_size,number camera_length,number start_angle, number end_angle,number total_time,\
+						number frame_rate,number no_frames,string rotation_axis )
 {
 	string date
 	date = format_date()
@@ -250,11 +286,10 @@ string format_metadata( string ISDataPath, string saveName, string notes,image i
 	return( CIF_3DED )
 }
 // Metadata block
-void CreateLogFile( string fileName, string saveName, number camid,\
+void CreateLogFile( string program_name, string fileName, string saveName, number camid,\
  number time_1, number time_2, number end_angle, number start_angle, string notes,\
   number fiddle, number cam_sleep, string ISDataPath, number frame_rate, number lambda, number camera_length )
 {
-	string program_name = "GiveMeED"
 	// event timings
 	number total_time = CalcHighResSecondsBetween( time_1, time_2 )
 	number no_frames = -1
@@ -346,7 +381,114 @@ void ContinousTilt( number fiddle, number alpha_start, number alpha_end, number 
 
 	return
 }
-// UI block
+
+
+//// Resolution rings and Tilt Axis ////
+number ConvertToRecNM( number num2convert )
+{ 
+	number convertednum = 1/(num2convert*0.1)
+	//result(num2convert + " A = " + convertednum + " nm-1" + "\n")
+	return convertednum
+}
+//Create ROI
+ROI CreateResRing( number radlabel, number radius, number x, number y, number r, number g, number b )
+{
+	ROI resRing = NewROI( )
+	ROISetCircle(resRing, x, y, radius)
+	image img := GetFrontImage()
+	ImageDisplay imgDisplay = img.ImageGetImageDisplay(0)
+	//imgDisplay.ImageDisplayAddROI( resRing )
+	
+	string label = radlabel + " A"
+	ROISetColor( resRing, r, g, b) //RBG in 0-1
+	if (radlabel != 100)
+		ROISetLabel( resRing, label )
+	ROISetMoveable( resRing, 0 )
+	ROISetVolatile( resRing, 0 )
+	ROISetRestrictToDisplay( resRing, 0 )
+	//ROISetName(resRing, radius )
+	
+	return resRing
+}
+image resolution_rings := [1,6] : {
+	{100},
+	{4},
+	{2},
+	{1.4},
+	{1},
+	{0.8}//,
+	//{0.6}
+}
+// Draw ROIs on front image.
+void draw_tilt_axis( number angle, number cent_x, number cent_y, image img )
+{
+	ROI tilt_axis = NewROI()
+	angle = angle * (3.141/180)
+	number length = cent_x
+	number x, y
+	x = ( length ) * sin( angle )
+	y = ( length ) * cos( angle )
+	
+	// Get cartesian coords from axis
+	ROISetLine( tilt_axis, cent_x+x, cent_y+y, cent_x-x, cent_y-y )
+	
+	ImageDisplay imgDisplay = img.ImageGetImageDisplay(0)
+	imgDisplay.ImageDisplayAddROI( tilt_axis )
+	
+	string label = "Tilt axis"
+	//ROISetLabel( tilt_axis, label )
+	ROISetMoveable( tilt_axis, 0 )
+	ROISetVolatile( tilt_axis, 0 )
+	number r, g, b
+	r = 0
+	b = 0
+	g = 1
+	ROISetColor( tilt_axis, r, g, b )
+}
+void draw_resolution_rings( image img, number rval, number gval, number bval, number cent_x, number cent_y )
+{
+	ImageDisplay imgDisplay = img.ImageGetImageDisplay(0)
+	number array_length = ImageGetDimensionSize(Resolution_Rings, 1)//y dimentsion of array
+
+	ROI ring
+	for (number i = 0; i < array_length ; i++ )//less than length of array
+	{
+		try
+		{
+			number ringRadius = GetPixel(resolution_rings, 0, i )//element i of array (counts from 0)
+			number scale = ScaleInfo( )
+			number rawRadius = ConvertToRecNM( ringRadius )
+			number pixRadius = rawRadius / scale
+			ring = CreateResRing( ringRadius, pixRadius, cent_x, cent_y, rval, gval, bval )
+			imgDisplay.ImageDisplayAddROI( ring )
+		}
+		catch
+		{
+			result("something went wrong" + "\n")
+		}
+	}
+	CloseImage(Resolution_Rings)
+}
+
+// Remove ROIs.
+void remove_ROIs( imageDisplay disp, number flag )
+{
+	number nR = disp.ImageDisplayCountROIs() 
+	for ( number i = ( nR - 1 ) ; i >= 0 ; i-- )
+		{
+		ROI r = disp.ImageDisplayGetROI( i )
+		if (flag == 1 ){
+			if ( r.ROIIsCircle() )
+					disp.ImageDisplayDeleteROI( r )
+			}
+		if (flag == 0){
+		if ( r.ROIIsLine() )
+					disp.ImageDisplayDeleteROI( r )
+			}
+		}
+}
+
+//// UI block ////
 // declare threads
 Class data_collection_thread : thread //controls data collection
 {
@@ -363,9 +505,10 @@ Class data_collection_thread : thread //controls data collection
 	void RunThread( object self )
 	{
 		UniqueSaveName( save_dir, saveName, fileName, sample_name, log_ext, exp_num, fileCheck )
-//		ContinousTilt( fiddle, alpha_start, alpha_end, end_angle, start_angle, time_1, time_2, cam_sleep, camera_length ) 
-		sleep(5.0)//pause to write IS data
-		CreateLogFile( fileName, saveName, camid, time_1, time_2, end_angle, start_angle,\
+		ContinousTilt( fiddle, alpha_start, alpha_end, end_angle, start_angle, time_1, time_2, cam_sleep, camera_length ) 
+		// Pause to write IS data.
+		sleep(5.0)
+		CreateLogFile( program_name, fileName, saveName, camid, time_1, time_2, end_angle, start_angle,\
 		 notes, fiddle, cam_sleep, ISDataPath, frame_rate, lambda, camera_length ) 
 	}
 }
@@ -397,6 +540,7 @@ class myDialog : UIframe
 		}
 		self.DLGValue("path_field", directory)
 	}
+	// Buttons for 3DED control.
 	void start_pressed( object self )//start 3DED 
 	{
 		self.Setelementisenabled( "start_pressed", false )
@@ -421,7 +565,7 @@ class myDialog : UIframe
 		result(saveName + "\n")
 		ContinousTilt( fiddle, alpha_start, alpha_end, end_angle, start_angle, time_1, time_2, cam_sleep, camera_length ) 
 		sleep(4.0)//pause to write IS data
-		CreateLogFile( fileName, saveName, camid, time_1, time_2, end_angle, start_angle, notes,\
+		CreateLogFile( program_name, fileName, saveName, camid, time_1, time_2, end_angle, start_angle, notes,\
 		 fiddle, cam_sleep, ISDataPath, frame_rate, lambda, camera_length ) 
 		//reset GUI
 		self.Setelementisenabled( "start_pressed", true )
@@ -444,6 +588,7 @@ class myDialog : UIframe
 		self.Setelementisenabled( "start_pressed", false )
 		self.Setelementisenabled( "stop_pressed", true )
 	}
+	// Buttons for tilt control.
 	void GoToAlpha1( object self )
 	{
 		number alpha_start
@@ -455,6 +600,37 @@ class myDialog : UIframe
 		number alpha_end
 		self.DLGGetValue( "alpha_2_field", alpha_end )
 		EMSetStageAlpha( alpha_end )
+	}
+	// Buttons for resolution rings and tilt axis.
+	void DrawRings( object self )
+{
+	{ 
+		self.DLGGetValue( "x_cent", img_center_x )
+		self.DLGGetValue( "y_cent", img_center_y )
+	}
+		image img := GetFrontImage()
+		result(img_center_x)
+		draw_resolution_rings( img, 1, 0, 0, img_center_x, img_center_y )
+	}
+	void delete_rings( object self )
+	{
+		image img := GetFrontImage()
+		ImageDisplay imgDisplay = img.ImageGetImageDisplay(0)
+		remove_ROIs( imgDisplay, 1 )
+	}
+	void delete_axis( object self )
+	{
+		image img := GetFrontImage()
+		ImageDisplay imgDisplay = img.ImageGetImageDisplay(0)
+		remove_ROIs( imgDisplay, 0 )
+	}
+	void DrawAxis( object self )
+	{
+		{ 
+			self.DLGGetValue( "ta_field", axis_value )
+		}
+			image img := GetFrontImage()
+			draw_tilt_axis( axis_value, img_center_x, img_center_y, img )
 	}
   TagGroup CreateDLG( object self )
   {
@@ -481,11 +657,13 @@ class myDialog : UIframe
         label = DLGCreateLabel("Notes:").DLGWidth(label_width)
         notes_field = DLGCreateStringField(notes).DLGIdentifier("notes_field").DLGWidth(entry_width*4)
         TagGroup notes_group = DLGGroupItems(label, notes_field).DLGTableLayout(2, 1, 0)
+        
         // Buttons
         TagGroup browse_button = DLGCreatePushButton("Browse files", "browse_files").DLGWidth(button_width)
         TagGroup setup_group = DLGGroupItems(path_group, sample_name_group, browse_button).DLGTableLayout(1, 6, 0)
         setup_box_items.DLGAddElement( setup_group )
         Dialog_UI.DLGAddElement( setup_box )
+        
         // Variables group
         TagGroup variables_box_items
         TagGroup variables_box = DLGCreateBox("Variables", variables_box_items).DLGFill("XY")
@@ -500,17 +678,19 @@ class myDialog : UIframe
         TagGroup variables_group = DLGGroupItems( wavelength_group, fps_group, notes_group ).DLGTableLayout(1, 3, 0)//IS_name_group,
         variables_box_items.DLGAddElement( variables_group )
         Dialog_UI.DLGAddElement( variables_box )
+        
         // Angles: alpha is tilt-x on a JEOL microscope
         TagGroup alpha_box_items
         TagGroup alpha_box = DLGCreateBox("Tilt Range", alpha_box_items).DLGFill("XY")
         TagGroup alpha_1_field//start angle for tilt
-        label = DLGCreateLabel("Start Angle (deg):").DLGWidth(label_width)
-        alpha_1_field = DLGCreateStringField("-60").DLGIdentifier("alpha_1_field").DLGWidth(entry_width*4)
+        label = DLGCreateLabel("Start Angle (deg):").DLGWidth(label_width*1.2)
+        alpha_1_field = DLGCreateStringField("-60").DLGIdentifier("alpha_1_field").DLGWidth(entry_width)
         TagGroup alpha_1_group = DLGGroupItems(label, alpha_1_field).DLGTableLayout(2, 1, 0)
         TagGroup alpha_2_field//end angle for tilt
-        label = DLGCreateLabel("End Angle (deg):").DLGWidth(label_width)
-        alpha_2_field = DLGCreateStringField("60").DLGIdentifier("alpha_2_field").DLGWidth(entry_width*4)
+        label = DLGCreateLabel("End Angle (deg):").DLGWidth(label_width*1.2)
+        alpha_2_field = DLGCreateStringField("60").DLGIdentifier("alpha_2_field").DLGWidth(entry_width)
         TagGroup alpha_2_group = DLGGroupItems(label, alpha_2_field).DLGTableLayout(2, 1, 0)
+        
         //Alpha buttons
         TagGroup GoToAlpha1 = DLGCreatePushButton( "Go to Start", "GoToAlpha1" ).DLGWidth(button_width)
         TagGroup GoToAlpha2 = DLGCreatePushButton( "Go to End", "GoToAlpha2" ).DLGWidth(button_width)
@@ -519,18 +699,51 @@ class myDialog : UIframe
         TagGroup alpha_group = DLGGroupItems( alpha_1_group, alpha_2_group, alpha_buttons ).DLGTableLayout( 1, 4, 0 )
         alpha_box_items.DLGAddElement( alpha_group )
         Dialog_UI.DLGAddElement( alpha_box )
+        
+        // Resolution rings and tilt axis box.
+        TagGroup rr_box_items
+        TagGroup rr_box = DLGCreateBox( "Overlay", rr_box_items ).DLGFill( "XY" )
+        
+        TagGroup ta_field
+        label = DLGCreateLabel( "Tilt axis (deg):" ).DLGWidth( label_width*1.0 )
+        ta_field = DLGCreateStringField( "25.1" ).DLGIdentifier( "ta_field" ).DLGWidth( entry_width )
+        TagGroup ta_group = DLGGroupItems( label, ta_field ).DLGTableLayout( 2, 1, 0 ).DLGAnchor( "West" )
+        
+        TagGroup x_cent, y_cent
+        string center
+        label = DLGCreateLabel( "Image Center X/Y (px):" ).DLGWidth( label_width*1.6 )
+        center = BaseN(img_center_x, 10, 4)
+        x_cent = DLGCreateStringField( center ).DLGIdentifier( "x_cent" ).DLGWidth( entry_width )
+        center = BaseN(img_center_y, 10, 4)
+        y_cent = DLGCreateStringField( center ).DLGIdentifier( "y_cent" ).DLGWidth( entry_width )
+        TagGroup pattern_box = DLGGroupItems( label, x_cent, y_cent ).DLGTableLayout( 3, 1, 0 ).DLGAnchor( "West" )
+        
+
+        TagGroup rrbutton = DLGCreatePushButton( "Draw Rings", "DrawRings" ).DLGWidth(button_width)
+        TagGroup rr_del = DLGCreatePushButton( "Remove Rings", "delete_rings" ).DLGWidth(button_width)
+        TagGroup tabutton = DLGCreatePushButton( "Draw Axis", "DrawAxis" ).DLGWidth(button_width)
+        TagGroup ta_del = DLGCreatePushButton( "Remove Axis", "delete_axis" ).DLGWidth(button_width)
+        TagGroup rr_buttons = DLGGroupItems( rrbutton, tabutton, rr_del, ta_del ).DLGTableLayout( 2, 2, 0 ).DLGAnchor( "Middle" )
+        
+        TagGroup rr_group = DLGGroupItems( ta_group, pattern_box, rr_buttons ).DLGTableLayout( 1, 4, 0 )
+        rr_box_items.DLGAddElement( rr_group )
+        Dialog_UI.DLGAddElement( rr_box )
+        
         // Experiment control box
         TagGroup control_box_items
         TagGroup control_box = DLGCreateBox("Data Collection", control_box_items).DLGFill("XY")
         TagGroup start_button = DLGCreatePushButton("Start 3DED", "start_pressed").DLGIdentifier("start_button").DLGWidth(button_width)
         TagGroup stop_button = DLGCreatePushButton("Abort 3DED", "stop_pressed").DLGIdentifier("stop_button").DLGWidth(button_width)
+        
         // Create the button box and contents
         taggroup control_group = DLGGroupItems(start_button, stop_button).DLGTableLayout(3, 1, 0).DLGAnchor("Center").DLGExpand("X")
         control_box_items.DLGAddElement(control_group)
         Dialog_UI.DLGAddElement(control_box)
         TagGroup footer = DLGCreateLabel(" ")
         Dialog_UI.DLGAddElement(footer)
+        
         return Dialog_UI
+        
   }
   object Init(object self, number callThreadID )
   {
@@ -544,14 +757,15 @@ class myDialog : UIframe
   }
 
 }
-// launch threads
-void Invoke( )
+// Launch threads.
+void Invoke( string program_name )
 {
 	result("starting")
 	object threadObject = alloc( data_collection_thread )
 	object dlgObject = alloc( myDialog ).Init( threadObject.ScriptObjectGetID() )
-	dlgObject.display( "GiveMeED" ) //title of UI
+	// UI title.
+	dlgObject.display( program_name )
 }
-// Script starts here
-Invoke()
-//end
+// Script starts here.
+Invoke( program_name )
+// End.
