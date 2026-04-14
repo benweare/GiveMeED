@@ -246,7 +246,7 @@ void Invoke( )
 {
 	object threadObject = alloc( ResRingsThread )
 	object dlgObject = alloc( myDialog ).Init( threadObject.ScriptObjectGetID() )
-	dlgObject.display( "Resolution Rings" ) //title of UI
+	dlgObject.display( "AutoResRings" ) //title of UI
 }
 
 // Script starts here
