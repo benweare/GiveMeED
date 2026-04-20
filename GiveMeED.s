@@ -5,23 +5,38 @@ B L Weare, @NMRC
 Associated preprint for greater context: http://arxiv.org/abs/2507.10247
 Please consider citing if you found this script useful.
 
+
+Known errors:
+- "Could not get number of frames in dataset."
+	Check that the file path and name in GMED is the same as the In-Situ panel.
+- "Error: Tags not written to image."
+	Check that the file path and name in GMED is the same as the In-Situ panel.
+- "Microscope error: Microscope stage communication (SetStagePosition) failed. The stage is still moving
+and it cannot accept a new command."
+	Affects newer versions of DigitalMicrograph. Try changing the value of 'fiddle'.
+- "The system cannot find the path specified."
+	Check that the file path and name in GMED is the same as the In-Situ panel.
+- Script hangs at start.
+	Try increasing 'fiddle'. 
+- DigitalMicrograph freezes during data collection.
+	Affets DM versions 3.5 and 3.6, issue with DigitalMicrograph.
+	
+Please report any issues to the GMED GitHub page.
 */
+	
 
 // Calculate the wavelength given the accelerating voltage, in metres.
 number CalculateWavelength( number HT )
 {
-	//EMGetHighTension( ) / 1000
 	number c = 299792458
 	number h = 6.62607015e-34
 	number e = 1.602176634e-19
 	number m_e = 9.1093837139e-31
-	
 	number E_k = HT*e
 	number lamb = h/(2*m_e*E_k*(1+(E_k/(2*m_e*(c**2)))))**0.5
-
 	return lamb
 }
-//Grab scale from image
+//Grab scale from image.
 number ScaleInfo( )
 {
 	image img := GetFrontImage()
@@ -38,41 +53,82 @@ void get_image_center( number &x, number &y )
 	y = ImageGetDimensionSize(img, 1)/2
 	return
 }
+// Function to store strings used to make CIFs.
+void cif_strings(string &microscope_name, string &camera_name, string &probe,\
+				string &source, string &TEM, string &detector, string &method, string &detector_details,\
+				string &extension )
+{
+	microscope_name = "'JEOL 2100Plus transmission electron microscope'"
+	camera_name = "'Gatan OneView'"
+	probe = "'electron'"
+	source = "'LaB6'"
+	TEM = "'transmission electron microscope'"
+	detector = "'CMOS camera'"
+	method = "'3DED'"
+	detector_details = "'electron camera'"
+	extension = ".cif"
+	return
+}
+// Function to store some default values.
+void microscope_defaults( number &tilt_axis, number &camera_length, number &fps )
+{
+	tilt_axis = -25.1
+	fps = 175
+	camera_length = -1
+	return
+}
+// Function to get the current state of the microscope.
+void get_microscope_state( number &HT, number &camid )
+{
+	HT = EMGetHighTension()
+	camid = CameraGetActiveCameraID()
+	//number spot_size = EMGetSpotSize()
+	return
+}
+void save_string_defaults( string &save_dir, string &name, string &path)
+{
+	// Directory to save log file, no trailing slash.
+	save_dir = "X:\\"
+	name = "sample_name"
+	path = save_dir + name
+	return
+}
 
-//Initialise variables
+// Global variables.
+string program_name = "GiveMeED"
+number false = 0; number true = 1
+
 number alpha_start = -60 //start stage tilt
 number alpha_end = 60 //end stage tilt
-string save_dir = "X:\\" //directory to save log file, no trailing slash
-string ISName = "sample_name"
-string sample_name = ISName
-string log_ext = ".cif" //file extension for log file
-string ISDataPath = save_dir + ISName
-string notes = "[e.g. cryo 120 K]" //enter notes here and they are included in the log file
-string filename, saveName
-number frame_rate = 175
 number exp_num = 0 // initial log file suffix
 number fiddle = 1.0 // tolerance in angle
 number cam_sleep = 0.001 // sync while loop
 number fileCheck = 1 
 number start_angle, end_angle 
-number camid = CameraGetActiveCameraID()
-number camera_length
-number HT = EMGetHighTension()
+
+number time_1, time_2
+
+string save_dir, ISName, ISDataPath
+save_string_defaults( save_dir, ISName, ISDataPath )
+string sample_name = ISName
+string filename, saveName
+
+string notes = "[e.g. cryo 120 K]"
+
+number tilt_axis, camera_length, frame_rate
+microscope_defaults( tilt_axis, camera_length, frame_rate )
+
+number HT, camid
+get_microscope_state( HT, camid )
+
+
 number lambda = CalculateWavelength( HT ) *1e10 // in Angstroms
 
 number img_center_x, img_center_y
 get_image_center( img_center_x, img_center_y )
 
-number axis_value = 0
 
-string program_name = "GiveMeED"
-string microscope_name = "JEOL 2100Plus transmission electron microscope"
-string camera_name = "Gatan OneView"
-
-// Event timing variables
-number time_1, time_2
-number false = 0; number true =1
-// Declare functions
+// File handling functions.
 string UniqueSaveName( string save_dir, string &saveName, string fileName, string sample_name,\
 						string log_ext, number &exp_num, number fileCheck )
 {
@@ -96,22 +152,7 @@ string UniqueSaveName( string save_dir, string &saveName, string fileName, strin
 	}
 	return saveName
 }
-// actual camera length based on image pixel size
-//number calcualte_camera_length(, number distance, number lamb, number size )
-//{ 
-//	number cam_length_1x_bin, cam_length_2x_bin, cam_length_4x_bin
-//	distance = (1/distance)*1e-9
-//	size = size*1e-9
-//	// camera length in metres 
-//	cam_length_1x_bin = (distance * size) / lamb
-//	
-//	cam_length_2x_bin = cam_length_1x_bin / 2
-//	cam_length_4x_bin = cam_length_1x_bin / 4
-//	
-//	return
-//}
-//calculate_camera_length( 0.074319, 0.00251, 15 )
-// Counts files in folder
+// Counts files in folder.
 TagGroup CreateFileList( string folder, number inclSubFolder )
 {
 	TagGroup filesTG = GetFilesInDirectory( folder , 1 )
@@ -195,15 +236,38 @@ number HowManyFrames( string folder )
 	nfiles = nfiles - 1//IS data is systematically high due to control file
 	return nfiles
 }
-// Writes tag to images
+
+
+// Data handling functions.
+// Calculate actual camera length from image pixel size.
+number calcualte_camera_length( number distance, number lamb, number px_size )
+{ 
+	number cam_length
+	// Micron to m.
+	distance = (1/distance)*1e-3
+	// nm to m.
+	px_size = px_size*1e-9
+	lamb = lamb *1e-9
+	// Camera length in metres. 
+	cam_length = (distance * px_size) / lamb
+	return cam_length
+}
+// Puts date into yyyy-mm-dd.
+string format_date()
+{
+	number year, month, day, hour, minute, second, nanosecond
+	DeconstructUTCDate( GetCurrentTime(), year, month, day, hour, minute, second, nanosecond )
+	string formatted = format(year, "%04d") + "-" + format(month, "%02d") + "-" + format(day, "%02d")
+	return formatted	
+}
 void Tag3DEDData( string progname, number start_angle, number end_angle,\
-				number total_time, number fps, string rotation_axis, string notes,\
-				string DataPath, string ISName )
+				number total_time, number fps, string notes,\
+				string DataPath, string ISName, number tilt_axis )
 {
 	number rotation_range = end_angle - start_angle
 	number exposure = 1 / fps
 	string ImageName = DataPath + "\\"+ ISName + ".dm4"
-	result( ImageName )
+	
 	try{
 		image target:=OpenImage(ImageName)
 		TagGroup imgTags = target.ImageGetTagGroup()
@@ -216,79 +280,85 @@ void Tag3DEDData( string progname, number start_angle, number end_angle,\
 		imgTags.TagGroupSetTagAsNumber( bosstag + "Total time (s)", total_time )
 		imgTags.TagGroupSetTagAsNumber( bosstag + "Frame rate (fps)", fps )
 		imgTags.TagGroupSetTagAsNumber( bosstag + "Exposure (s)", exposure )
-		imgTags.TagGroupSetTagAsString( bosstag + "Rotation axis (deg)", rotation_axis )
+		imgTags.TagGroupSetTagAsNumber( bosstag + "Rotation axis (deg)", tilt_axis )
 		imgTags.TagGroupSetTagAsString( bosstag + "Notes", notes )
 		Save( target )
 		CloseImage( target )
 	}
 	catch{
-		result( "Something went wrong. Tags not written to image." + "\n" )
+		result( "Error: Tags not written to image." + "\n" )
 		result(ImageName + "\n" )
 	}
 	
 }
-// Puts date into yyyy-mm-dd
-string format_date()
-{
-	number year, month, day, hour, minute, second, nanosecond
-	DeconstructUTCDate( GetCurrentTime(), year, month, day, hour, minute, second, nanosecond )
-	string formatted = format(year, "%04d") + "-" + format(month, "%02d") + "-" + format(day, "%02d" + "\n")
-	return formatted	
-}
 // Writes metadata string as CIF
-string format_metadata( string ISDataPath, string saveName, string notes,image img,number scale_x,\
-						number scale_y,number phys_pixelsize_x,number phys_pixelsize_y,string timestamp,\
-						string program_name,number lambda,string tem_name,string camera_name,number high_tension,\
-						number spot_size,number camera_length,number start_angle, number end_angle,number total_time,\
-						number frame_rate,number no_frames,string rotation_axis )
+string format_metadata( string ISDataPath, string saveName, string notes, image img, string timestamp,\
+						string program_name, number lambda, number spot_size, number start_angle,\
+						number end_angle, number total_time, number frame_rate, number no_frames, number tilt_axis )
 {
-	string date
+	string date, microscope_name, camera_name, probe
+	string source, TEM,detector, method, detector_details
+	string extension, rotation_axis
+		
 	date = format_date()
-	string CIF_3DED = "data_GMED"+"\n"+\
-	"_audit_creation_date " + "?" + "\n"+\
+	
+	cif_strings( microscope_name, camera_name, probe, source, TEM,\
+	detector, method, detector_details, extension )
+				
+	number high_tension = EMGetHighTension()
+	
+	number camera_length
+	number phys_pixelsize_x, phys_pixelsize_y
+	number scale_x, scale_y
+	CameraGetPixelSize(camid, phys_pixelsize_x, phys_pixelsize_y)
+	GetScale( img, scale_x, scale_y )
+	camera_length = calcualte_camera_length( (scale_x), lambda, (phys_pixelsize_x) )
+	
+	string output = "data_GMED"+"\n"+\
+	"_audit_creation_date " + date + "\n"+\
 	"_audit_creation_method " + "'Created by GMED'" + "\n"+\
-	"_computing_data_collection " + program_name + "\n"+\
-	"_diffrn_source 'LaB6'\n"+\
-	"_diffrn_radiation_probe " + "electron" + "\n"+\
-	"_diffrn_radiation_type electrons \n"+\
+	"_computing_data_collection " + "'" + program_name + "'" + "\n"+\
+	"_diffrn_source " + source + "\n"+\
+	"_diffrn_radiation_probe " + probe + "\n"+\
+	"_diffrn_radiation_type " + probe + "s\n"+\
 	"_diffrn_radiation_wavelength " + lambda + "\n"+\
-	"_diffrn_radiation_monochromator " + "'transmission electron microscope'" + "\n"+\
-	"_diffrn_radiation_device " + "'transmission electron microscope'" + "\n"+\
-	"_diffrn_radiation_device_type " + tem_name + "\n"+\
-	"_diffrn_detector " + "'CMOS camera'" + "\n"+\
+	"_diffrn_radiation_monochromator " + TEM + "\n"+\
+	"_diffrn_radiation_device " + TEM + "\n"+\
+	"_diffrn_radiation_device_type " + microscope_name + "\n"+\
+	"_diffrn_detector " + detector + "\n"+\
 	"_diffrn_detector_type " + camera_name + "\n"+\
-	"_diffrn_measurement_method '3DED'"+ "\n"+\
-	"_diffrn_source_voltage " + high_tension + "\n" +\
-	"_diffrn_detector_details 'electron camera'" +"\n"+\
+	"_diffrn_measurement_method " + method + "\n"+\
+	"_diffrn_source_voltage " + (high_tension/1000) + "\n" +\
+	"_diffrn_detector_details " + detector_details +"\n"+\
 	"_cell_measurement_temperature ?" +"\n"+\
 	"_diffrn_measurement_details" +"\n"+\
 	";" +"\n"+\
-	"Save Location: " + ISDataPath + "\n"+\
-	"IS Data: " + saveName + "\n"+\
-	"Spot Size: " + spot_size + "\n"+\
-	"Camera: " + camera_name + "\n"+\
-	"Camera length (mm): " + camera_length + "\n"+\
-	"Camera pixel size x/y (um): (" + phys_pixelsize_x + ", " + phys_pixelsize_y + ")\n"+\
-	"Scale (nm-1 px-1): " + scale_x + ", " + scale_y + "\n"+\
-	"Image size x/y (px): (" + ImageGetDimensionSize(img, 0) + ", " + ImageGetDimensionSize(img, 1) + ")\n"+\
-	"Date and time: " + timestamp + "\n"+\
-	"Start angle (deg): " + start_angle + "\n"+\
-	"End angle (deg): " + end_angle +  "\n"+\
-	"Rotation range (deg): " + (end_angle - start_angle) + "\n"+\
-	"Data collection time (s): " + total_time + "\n"+\
-	"Frame Rate (fps): " + frame_rate + "\n"+\
-	"Exposure (s): " + 1/frame_rate + "\n"+\
-	"Number of frames : " + no_frames + "\n"+\
-	"Angle per frame (deg): " + abs( end_angle - start_angle ) / no_frames + "\n"+\
-	"Rotation axis (deg): " + rotation_axis + "\n"+\
-	"Notes:" + notes + "\n"+\
+	"_gmed_file_path " + ISDataPath + saveName + "\n"+\
+	"_gmed_spot_size " + spot_size + "\n"+\
+	"_gmed_camera_length " + camera_length + "\n"+\
+	"_gmed_camera_pixel_size_x "+ phys_pixelsize_x + "\n"+\
+	"_gmed_camera_pixel_size_y "+ phys_pixelsize_y + "\n"+\
+	"_gmed_pixel_scale_nm " + scale_x + ", " + scale_y + "\n"+\
+	"_gmed_image_size_px " + ImageGetDimensionSize(img, 0) + ", " + ImageGetDimensionSize(img, 1) + "\n"+\
+	"_gmed_date_and_time " + timestamp + "\n"+\
+	"_gmed_start_angle " + start_angle + "\n"+\
+	"_gmed_end_angle " + end_angle +  "\n"+\
+	"_gmed_rotation_range" + (end_angle - start_angle) + "\n"+\
+	"_gmed_collection_time " + total_time + "\n"+\
+	"_gmed_fps " + frame_rate + "\n"+\
+	"_gmed_exposure_secs " + 1/frame_rate + "\n"+\
+	"_gmed_total_frames : " + no_frames + "\n"+\
+	"_gmed_angle_per_frame " + abs( end_angle - start_angle ) / no_frames + "\n"+\
+	"_gmed_rotation_axis " + tilt_axis + "\n"+\
+	"_gmed_notes " + notes + "\n"+\
 	";\n"
-	return( CIF_3DED )
+	
+	return output
 }
-// Metadata block
+
 void CreateLogFile( string program_name, string fileName, string saveName, number camid,\
- number time_1, number time_2, number end_angle, number start_angle, string notes,\
-  number fiddle, number cam_sleep, string ISDataPath, number frame_rate, number lambda, number camera_length )
+				number time_1, number time_2, number end_angle, number start_angle, string notes,\
+				number fiddle, number cam_sleep, string ISDataPath, number frame_rate, number lambda, number tilt_axis )
 {
 	// event timings
 	number total_time = CalcHighResSecondsBetween( time_1, time_2 )
@@ -302,25 +372,19 @@ void CreateLogFile( string program_name, string fileName, string saveName, numbe
 		no_frames = -1 //total number of frames
 	}
 	// get experiment parameters 
-	//number end_angle = EMGetStageAlpha( )
+	number end_angle = EMGetStageAlpha( )
 	number spot_size = EMGetSpotSize( )
 	number acquisition_time = total_time / no_frames
 	number total_angle = abs( end_angle - start_angle )
 	string timestamp = FormatTimeString( GetCurrentTime(), 33 )
-	// get camera and tem name
-	string camera_name = CameraGetName( camid )
-	string tem_name = "'JEOL 2100Plus Transmission Electron Microscope'"
-	string rotation_axis = "-25.1"
-	number high_tension = EMGetHighTension( ) / 1000 //accelerating voltage in kV
+	
 	image img := GetFrontImage()
-	number phys_pixelsize_x, phys_pixelsize_y, scale_x, scale_y
-	CameraGetPixelSize(camid, phys_pixelsize_x, phys_pixelsize_y)
-	GetScale( img, scale_x, scale_y )
 	
 	// create log
-	string log_message = format_metadata(ISDataPath, saveName, notes, img, scale_x, scale_y, phys_pixelsize_x,\
-	 phys_pixelsize_y, timestamp, program_name, lambda, tem_name, camera_name, high_tension, spot_size,\
-	 camera_length, start_angle, end_angle, total_time, frame_rate, no_frames, rotation_axis)
+	string log_message
+	log_message = format_metadata(ISDataPath, saveName, notes, img,\
+				timestamp, program_name, lambda, spot_size, start_angle, end_angle,\
+				total_time, frame_rate, no_frames, tilt_axis)
 	
 	// print log to console
 	result( "\n ===== \n" )
@@ -329,18 +393,26 @@ void CreateLogFile( string program_name, string fileName, string saveName, numbe
 	number fileNum = CreateFileForWriting( saveName )
 	WriteFile( fileNum, log_message )
 	CloseFile( fileNum )
-	result( "Wrote file: " + fileName )
+	result( "Wrote file: " + fileName + "\n" )
 	result( "Saved data to: " + saveName + "\n" )
 	
-	Tag3DEDData( program_name, start_angle, end_angle, total_time, frame_rate, rotation_axis, notes, ISDataPath, ISName )
+	if (no_frames == -1)
+	{ 
+		result("Error: could not get number of frames in dataset.") 
+	}
+	
+	Tag3DEDData( program_name, start_angle, end_angle, total_time, frame_rate, notes, ISDataPath, ISName, tilt_axis )
 }
-// data collection block
+
+
+// Functions for 3DED data collection.
 void ContinousTilt( number fiddle, number alpha_start, number alpha_end, number &end_angle,\
- number &start_angle, number &time_1, number &time_2, number cam_sleep, number &camera_length )
+					number &start_angle, number &time_1, number &time_2, number cam_sleep,\
+					number &camera_length )
 {
 	camera_length = EMGetCameraLength()
 	EMSetStageAlpha( alpha_start )
-	while ( abs( EMGetStageAlpha( )- alpha_start ) >= fiddle )
+	while ( abs( EMGetStageAlpha( ) - alpha_start ) >= fiddle )
 	{
 		if ( ShiftDown( ) ) exit( 0 )
 	}
@@ -504,12 +576,12 @@ Class data_collection_thread : thread //controls data collection
 	void SetLinkedDialogID( object self, number ID ) { linkedDLG_ID = ID; }
 	void RunThread( object self )
 	{
-		UniqueSaveName( save_dir, saveName, fileName, sample_name, log_ext, exp_num, fileCheck )
+		UniqueSaveName( save_dir, saveName, fileName, sample_name, ".cif", exp_num, fileCheck )
 		ContinousTilt( fiddle, alpha_start, alpha_end, end_angle, start_angle, time_1, time_2, cam_sleep, camera_length ) 
 		// Pause to write IS data.
 		sleep(5.0)
 		CreateLogFile( program_name, fileName, saveName, camid, time_1, time_2, end_angle, start_angle,\
-		 notes, fiddle, cam_sleep, ISDataPath, frame_rate, lambda, camera_length ) 
+		 notes, fiddle, cam_sleep, ISDataPath, frame_rate, lambda, tilt_axis ) 
 	}
 }
 // declare UI elements
@@ -527,7 +599,8 @@ class myDialog : UIframe
 // UI functions; name is same as corresponding button
 	// updates variables by pulling from UI input
 	void UpdateValues( object self, number &alpha_start, number &alpha_end, string &notes,\
-	 string &save_dir, string &sample_name, string &ISName, string &ISDataPath, number &frame_rate, number &lambda )
+	 string &save_dir, string &sample_name, string &ISName, string &ISDataPath,\
+	 number &frame_rate, number &lambda, number &tilt_axis )
 	{ 
 		return
 	}
@@ -557,16 +630,17 @@ class myDialog : UIframe
 		self.DLGGetValue( "wavelength_field", lambda ) 
 		self.DLGGetValue( "notes_field", notes ) 
 		self.DLGGetValue( "sample_name_field", ISName ) 
+		self.DLGGetValue( "ta_field", tilt_axis )
 		//run functions
 		result(save_dir + "\n")
-		string saveName = UniqueSaveName( save_dir, saveName, fileName, sample_name, log_ext, exp_num, fileCheck )
+		string saveName = UniqueSaveName( save_dir, saveName, fileName, sample_name, ".cif", exp_num, fileCheck )
 		ISDataPath = save_dir + "\\" + ISName
 		//ISDataPath = save_dir + newName
 		result(saveName + "\n")
 		ContinousTilt( fiddle, alpha_start, alpha_end, end_angle, start_angle, time_1, time_2, cam_sleep, camera_length ) 
 		sleep(4.0)//pause to write IS data
 		CreateLogFile( program_name, fileName, saveName, camid, time_1, time_2, end_angle, start_angle, notes,\
-		 fiddle, cam_sleep, ISDataPath, frame_rate, lambda, camera_length ) 
+		 fiddle, cam_sleep, ISDataPath, frame_rate, lambda, tilt_axis ) 
 		//reset GUI
 		self.Setelementisenabled( "start_pressed", true )
 		self.Setelementisenabled( "reset_pressed", true )
@@ -583,7 +657,7 @@ class myDialog : UIframe
 	}
 	void reset_pressed( object self )//reset stage
 	{
-		//EMSetBeamBlanked( true )
+		EMSetBeamBlanked( true )
 		EMSetStageAlpha( 0 )
 		self.Setelementisenabled( "start_pressed", false )
 		self.Setelementisenabled( "stop_pressed", true )
@@ -627,10 +701,10 @@ class myDialog : UIframe
 	void DrawAxis( object self )
 	{
 		{ 
-			self.DLGGetValue( "ta_field", axis_value )
+			self.DLGGetValue( "ta_field", tilt_axis )
 		}
 			image img := GetFrontImage()
-			draw_tilt_axis( axis_value, img_center_x, img_center_y, img )
+			draw_tilt_axis( tilt_axis, img_center_x, img_center_y, img )
 	}
   TagGroup CreateDLG( object self )
   {
@@ -639,6 +713,7 @@ class myDialog : UIframe
         number button_width = 50
         TagGroup label
         TagGroup Dialog_UI = DLGCreateDialog("GiveMeED")
+        
         // Create a box for the setup parameters             
         TagGroup setup_box_items
         TagGroup setup_box = DLGCreateBox("Save Data Path", setup_box_items).DLGFill("XY")
@@ -652,7 +727,7 @@ class myDialog : UIframe
         label = DLGCreateLabel("Sample name:").DLGWidth(label_width)
         sample_name_field = DLGCreateStringField(sample_name).DLGIdentifier("sample_name_field").DLGWidth(entry_width*4)
         TagGroup sample_name_group = DLGGroupItems(label, sample_name_field).DLGTableLayout(2, 1, 0)
-		//notes field - not in UI yet
+		// Notes field
 		TagGroup notes_field
         label = DLGCreateLabel("Notes:").DLGWidth(label_width)
         notes_field = DLGCreateStringField(notes).DLGIdentifier("notes_field").DLGWidth(entry_width*4)
@@ -755,16 +830,16 @@ class myDialog : UIframe
     callThread.SetLinkedDialogID( self.ScriptObjectGetID() )  
     return self.super.init( self.CreateDLG() )
   }
-
 }
 // Launch threads.
 void Invoke( string program_name )
 {
-	result("starting")
-	object threadObject = alloc( data_collection_thread )
-	object dlgObject = alloc( myDialog ).Init( threadObject.ScriptObjectGetID() )
-	// UI title.
-	dlgObject.display( program_name )
+		object threadObject = alloc( data_collection_thread )
+		object dlgObject = alloc( myDialog ).Init( threadObject.ScriptObjectGetID() )
+		// UI title.
+		dlgObject.display( program_name )
+		result("Starting.\n")
+
 }
 // Script starts here.
 Invoke( program_name )

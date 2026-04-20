@@ -1,12 +1,10 @@
 # A little glue to go from DM to PETS2, DIALS, etc
 # Logic:
-#1: Open IS dataset
-#2: Save it as certain format, with desired processing
-#    2a: save as files to folder, then import as stack, then save as stack
-#    2b: save directly as stack/files
-#3: read the metadata and write an import file (PETS2, DIALS, etc).
-#4: save everything in a folder so it's ready to go
-#5: open e.g. PETS2, DIALS, and begin preprocessing?
+# To do:
+# 1 - GUI
+# 2 - Fix PETS2 keywords
+# 3 - Fix parsing of 3DED.cif
+
 
 import DigitalMicrograph as DM
 import numpy as np
@@ -15,13 +13,52 @@ from os import path
 import glob
 
 def _open_image( file_path ):
+    # Util for opening images im DM.
     img = DM.OpenImage( file_path )
     img.ShowImage()
     return img
 
 
+#def _save_as_tiff( imageref, path ):
+#    script_string = 'string format = "TIFF Format"\n'\
+#    'string path = "' + path + '"\n'\
+#    'imageDocument doc = dm_image.ImageGetOrCreateImageDocument()\n'\
+#    'doc.ImageDocumentSaveToFile( format , path )'
+#    print( script_string )
+#    DM.ExecuteScriptString( script_string )
+#    return
+
+
+def _does_directory_exist( target_path ):
+    exists = os.path.exists( target_path )
+    if exists == False:
+        os.mkdir( target_path )
+    return
+
+
+def _save_project( output, format ):
+    # Formats: '.phil', '.txt', '.CIF', '.pets2', etc.
+    try:
+        #block for saving file
+        savepath = location + name + format
+        file = open( savepath, 'x' )
+        file.write( output )
+        file.close( )
+    except:
+        print( "Error: something went wrong saving the project." )
+    return
+
+
+def _calc_axis_angle( angle, x, y, z ):
+    # Convert tilt axis from angle to axis-angle vector.
+    # [x, y, z] is direction of rotation: -1, 0, or 1.
+    vector = np.array([ x, y, z ])
+    vector = vector * angle
+    return vector
+
+
 def _create_container_from_template( file_path, **kwargs ):
-    # Use an existing image to create an empty container, and copy tags.
+    # Use an existing image to create an empty container.
     sizeZ = kwargs.get('length', 1) - 1
     
     img = DM.OpenImage( file_path )
@@ -29,13 +66,8 @@ def _create_container_from_template( file_path, **kwargs ):
     sizeY = img.GetDimensionSize(1)
     
     imgArray = np.zeros( (sizeZ, sizeX, sizeY) )
-
-    #container  = DM.CreateImage(imgArray)
-    #container.SetName( 'IS Data' )
-    #_copy_image_tags( img, container )
     
     DM.CloseImage( img )
-    #del( imgArray )
     
     return imgArray
 
@@ -81,18 +113,19 @@ def _write_IS_to_stack( file_path, stack ):
 
 def _save_IS_as_stack( input, name, ext, file_path ):
     # Save as a Gatan .dm4
+    _does_directory_exist( file_path )
     save_path = file_path + '\\' + name + ext
     input.SaveAsGatan( save_path )
     return
 
 
 # WIP
-def _bin_array( input, size, bin_x, bin_y ):
-    new_shape = size[0]/bin_x, size[1]/bin_y
-    
-    shape = (new_shape[0], arr.shape[0] // new_shape[0],
-             new_shape[1], arr.shape[1] // new_shape[1])
-    return input.reshape( shape ).mean(-1).mean(1)
+#def _bin_array( input, size, bin_x, bin_y ):
+#    new_shape = size[0]/bin_x, size[1]/bin_y
+#    
+#    shape = (new_shape[0], arr.shape[0] // new_shape[0],
+#             new_shape[1], arr.shape[1] // new_shape[1])
+#    return input.reshape( shape ).mean(-1).mean(1)
 
 
 def IS_to_stack( folder_path, **kwargs ):
@@ -126,16 +159,16 @@ def IS_to_stack( folder_path, **kwargs ):
 
 def _save_files_to_folder( stack, target_path, base_name, length, ext ):
     # Save input images as files to folder.
-    # Use leading zeros thing from PETS2 project file.
     
-    sizeX = stack.GetDimensionSize(0)
-    sizeY = stack.GetDimensionSize(1)
-    sizeZ = stack.GetDimensionSize(2)
+    # [X, Y, Z]
+    size = [stack.GetDimensionSize(0), stack.GetDimensionSize(1), stack.GetDimensionSize(2)]
     
-    img_data = np.zeros( (sizeZ, sizeX, sizeY) )
+    img_data = np.zeros( (size[2], size[1], size[0]) )
     img_data = stack.GetNumArray()
     
     _does_directory_exist( target_path )
+    
+    files = []
     
     for n in range(length):
         if n+1 < 10:
@@ -147,8 +180,9 @@ def _save_files_to_folder( stack, target_path, base_name, length, ext ):
         elif n+1 > 999 and n+1 < 10000:
             zeros = '00'
         print( 'Saving ' + base_name + zeros + str(n) + ext  )
-        save_path = target_path + '\\' + base_name + zeros + str(n) + ext
-        # Copy array then create image to save.
+        save_path = target_path + '\\' + base_name + zeros + str(n)
+        files.append( base_name + zeros + str(n) + ext )
+        # Copy array then create image and save.
         slice = np.copy(img_data[0, :, :])
         dm_image = DM.CreateImage( slice )
         _copy_image_tags( stack, dm_image )
@@ -159,59 +193,16 @@ def _save_files_to_folder( stack, target_path, base_name, length, ext ):
             doc.SaveToFile( 'TIFF Format', save_path )
             doc.Close( False )
         DM.CloseImage( dm_image )
-    return
-
-
-def _save_as_tiff( imageref, path ):
-    script_string = 'string format = "TIFF Format"\n'\
-    'string path = "' + path + '"\n'\
-    'imageDocument doc = dm_image.ImageGetOrCreateImageDocument()\n'\
-    'doc.ImageDocumentSaveToFile( format , path )'
-    print( script_string )
-    #DM.ExecuteScriptString( script_string )
-    return
-
-def _does_directory_exist( target_path ):
-    exists = os.path.exists( target_path )
-    if exists == False:
-        os.mkdir( target_path )
-    return
-
-def create_PETS2_project( IS_stack, IS_length, folder_path ):
-    '''
-    Save IS data as a PETS2 project.
-    '''
-    # Save files to folder.
-    _save_files_to_folder( IS_stack,\
-                            (folder_path + '\\files',)\# Sub-directory to save frames.
-                            'test',\
-                             IS_length,\
-                             '.tiff' )
-    # Create .pets2 file.
     
-    return
+    return files
 
-# Metadata files.
-def _save_project( output, format ):
-    # Formats: '.phil', '.txt', '.CIF', '.pets2', etc.
-    try:
-        #block for saving file
-        savepath = location + name + format
-        file = open( savepath, 'x' )
-        file.write( output )
-        file.close( )
-    except:
-        print( "Error: something went wrong saving the project." )
-    return
-
-def _calc_axis_angle( angle, x, y, z ):
-    # Convert tilt axis from angle to axis-angle vector.
-    # [x, y, z] is direction of rotation: -1, 0, or 1.
-    vector = np.array([ x, y, z ])
-    vector = vector * angle
-    return vector
 
 class DataReductionVariables():
+    '''
+    Class to contain variables for data reduction.
+    
+    Used to write projects for PETS2 and DIALS.
+    '''
     def __init__( self ):
         # Float.
         self.alpha = 0
@@ -242,7 +233,6 @@ class DataReductionVariables():
         self.extension = '.tif'
         
         #DIALS specific
-        self.panel_size = [0.005, 0.005]
         self.material = '"Si"'
         self.trusted_range = [-1000000, 4294967295]
         self.gain = 1
@@ -251,15 +241,18 @@ class DataReductionVariables():
         self.beam_center = [0, 0]
         self.probe = "'x-ray *electron neutron'"
         self.camera_name = 'Gatan OneView'
+        self.pixel_size = [0.0, 0.0]
         return
     
     
-    def _read_CIF( self ):
+    def _read_CIF( self, path, name ):
         # Read the metadata from the 3DED experiment.
-        file = open( 'C:\\Users\\pczbw2\\Desktop\\TEMP\\test.cif' )
+        print( path + '\\' + name )
+        file = open( (path + '\\' + name) )
         exp_data = file.read()
         file.close()
         return exp_data
+    
     
     def _get_spacing( self, data, val ):
         line_break = data[val:].find( '\n' )
@@ -267,55 +260,205 @@ class DataReductionVariables():
         colon = data[val:].find( ':' )
         return line_break, space, colon
     
+    
     def _get_exp_floats( self, data ):
         # find var in string, then read it
         # find next line break to know how much to read
-        search = [ 'Start angle (deg):',\
-        'frames',\
-        'Angle per frame (deg):',\
-        'Rotation axis (deg):',\
-        'Camera length (mm):']#,\
-        #'Image size x/y (px):']
+        search = [ '_gmed_start_deg_angle',\
+        '_gmed_angle_per_frame',\
+        '_gmed_total_frames',\
+        '_gmed_rotation_axis',\
+        '_gmed_camera_length',\
+        '_gmed_camera_pix_size_x',\
+        '_gmed_camera_pix_size_y',\
+        '_diffrn_radiation_wavelength']
         vals = []
-        # Fields that end with colon.
-        for n, m in enumerate(search):
-            location = data.find( m )
-            lb, s, c = self._get_spacing( data, location )
-            vals.append( data[ (location + c + 1) : (location + lb) ] )
-        search = [ '_diffrn_radiation_wavelength' ]
-        # Fields that end with space.
         for n, m in enumerate(search):
             location = data.find( m )
             lb, s, c = self._get_spacing( data, location )
             vals.append( data[ (location + s + 1) : (location + lb) ] )
         floats = [ float(i) for i in vals ]
-        print( floats )
         return floats
-    
+
+
     def _store_exp_data( self, floats ):
         self.alpha = floats[0]
         self.alphastep = floats[1]
         self.nframes = floats[2]
-        self.cam_length = floats[4]
         self.tilt_axis = floats[3]
-        self.lamb = floats[5]
+        self.cam_length = floats[4]
+        self.pixel_size[0] = floats[5]
+        self.pixel_size[1] = floats[6]
+        self.lamb = floats[7]
         return
 
+
+def _save_project( output, location, name, format ):
+    # Formats: '.phil', '.txt', '.CIF', '.pets2', etc.
+    #try:
+    #block for saving file
+    savepath = location + '\\' + name + format
+    print(savepath)
+    file = open( savepath, 'x' )
+    file.write( output )
+    file.close( )
+    #except:
+    #    print( "Error: something went wrong saving the project." )
+    return
+
+
+def _calc_axis_angle( angle, x, y, z ):
+    # Convert tilt axis from angle to axis-angle vector.
+    # [x, y, z] is direction of rotation: -1, 0, or 1.
+    vector = np.array([ x, y, z ])
+    vector = vector * angle
+    return vector
+
+
+def _write_DIALS_project( vars ):
+    # DIALS import.phil format.
+    try:
+        axis_angle = _calc_axis_angle( vars.tilt_axis, 1, 0, 0 )
+    except:
+        axis_angle = [0, 0, 0]
+        print( 'Error: could not calculate tilt axis.' )
+    output = ''\
+    'geometry {'+ '\n'\
+    '  beam {'+ '\n'\
+    '    probe = ' + vars.probe + '\n'\
+    '    wavelength = ' + str(vars.lamb) + '\n'\
+    '  }'+ '\n'\
+    '  detector {'+ '\n'\
+    '    panel {'+ '\n'\
+    '      name = ' + vars.camera_name + '\n'\
+    '    }'+ '\n'\
+    '    panel {'+ '\n'\
+    '      material = ' + vars.material + '\n'\
+    '    }'+ '\n'\
+    '    panel {'+ '\n'\
+    '      pixel_size = ' + str(vars.pixel_size[0]) + ' ' + str(vars.pixel_size[1]) + '\n'\
+    '    }'+ '\n'\
+    '    panel {'+ '\n'\
+    '      image_size = ' + str(vars.image_size[0]) + ' ' + str(vars.image_size[1]) + '\n'\
+    '    }'+ '\n'\
+    '    panel {'+ '\n'\
+    '      trusted_range = ' + str(vars.trusted_range[0]) + ' '  + str(vars.trusted_range[1]) + '\n'\
+    '    }'+ '\n'\
+    '    panel {'+ '\n'\
+    '      gain = '+ str(vars.gain) + '\n'\
+    '    }'+ '\n'\
+    '    distance = ' + str(vars.cam_length) + '\n'\
+    '    fast_slow_beam_centre = ' + str(vars.beam_center[0]) + ' ' + str(vars.beam_center[1]) + '\n'\
+    '  }'+ '\n'\
+    '  goniometer {'+ '\n'\
+    '    axes = ' + str(axis_angle[0]) + ' ' + str(axis_angle[1]) +\
+    ' ' + str(axis_angle[2]) + ' ' + '\n'\
+    '  }'+ '\n'\
+    '  scan {'+ '\n'\
+    '    oscillation = '+ str(vars.alpha) + ' ' + str(vars.alphastep) + '\n'\
+    '  }'+ '\n'\
+    '}'
+    return output
+
+
+def _write_PETS2_project( vars, files_list ):
+    # PETS2 project format.
+    output = ''\
+    'lambda ' + str(vars.lamb) + '\n'\
+    'geometry ' + vars.geometry + '\n'\
+    'Aperpixel ' + str(vars.scale) + '\n'\
+    'phi ' + str(vars.semiangle) + '\n'\
+    'omega ' + str(vars.tilt_axis) + '\n'\
+    'noiseparameters 1 40 \n'\
+    'reflectionsize ' + str(vars.refdia) + '\n'\
+    'bin ' + str(vars.binning) + '\n'\
+    'dstarmin ' + vars.dstarmin + '\n'\
+    'dstarmax ' + vars.dstarmax + '\n'\
+    'dstarmaxps ' + vars.dstarmaxps + '\n'\
+    'center ' + str(vars.image_center[0]) + ' ' + str(vars.image_center[0]) + '\n'\
+    'imagelist' + '\n'
+    
+    # Write list of files.
+    for n in files_list:
+        output += str(n) + '\n'
+    
+    output += 'endimagelist'
+    
+    return output
+
+# Functions to write projects.
+def create_DIALS_project( IS_stack, IS_length, save_path, **kwargs ):
+    ''' Save IS data as a DIALS project.'''
+    
+    name = kwargs.get('name', 'experiment')
+    
+    print( 'Starting.\n' )
+    
+    # Save files to folder.
+    _save_IS_as_stack( IS_stack, name, '.dm4', (save_path + '\\DIALS') )
+    
+    # Read in variables from experiment.
+    exp_variables = DataReductionVariables()
+    cif_data = exp_variables._read_CIF( save_path, 'test_00_0.cif' )
+    floats = exp_variables._get_exp_floats( cif_data )
+    exp_variables._store_exp_data( floats )
+    
+    exp_variables.image_center = [IS_stack.GetDimensionSize(0)/2, IS_stack.GetDimensionSize(1)/2]
+    
+    # Create DIALS import.phil.
+    project_string = _write_DIALS_project( exp_variables )
+    print(project_string)
+    _save_project( project_string, (save_path + '\\DIALS' ), 'import', '.phil' )
+    
+    print( 'Finished.\n' )
+    
+    return
+
+
+def create_PETS2_project( IS_stack, IS_length, save_path, **kwargs ):
+    '''
+    Save IS data as a PETS2 project.
+    '''
+    
+    name = kwargs.get('name', 'experiment')
+    
+    # Save files to folder.
+    print( 'Starting.\n' )
+    
+    path = save_path + '\\PETS2' + '\\files'
+    
+    # Save files and return list of names.
+    files = _save_files_to_folder( IS_stack, path, name,IS_length,'.tiff' )
+    
+    # Read in variables from experiment.
+    exp_variables = DataReductionVariables()
+    cif_data = exp_variables._read_CIF( save_path, 'SH22_02.cif' )
+    floats = exp_variables._get_exp_floats( floats )
+    exp_variables._store_exp_data( cif_data )
+    
+    exp_variables.image_center = [IS_stack.GetDimensionSize(0)/2, IS_stack.GetDimensionSize(1)/2]
+    
+    # Create .pets2 file.
+    project_string = _write_PETS2_project( exp_variables, files )
+    _save_project( project_string, (save_path + '//PETS2'), name, '.pts2' )
+    
+    print( 'Finished.\n' )
+    
+    return
 
 
 ## Scripts start here
 # File path. Needs \\ to work.
-folder_path = 'C:\\Users\\pczbw2\\Desktop\\TEMP\\SH22_02'
+raw_data = 'X:\\BLW\\GMED_test\\'
+save_path = 'X:\\BLW\\GMED_test'
+name = 'test_00'
 
+# Open IS data as a stack.
+IS_stack, IS_length = IS_to_stack( (raw_data + name) )
 
-IS_stack, IS_length = IS_to_stack( folder_path )
-
-print('Saving images.')
-_save_files_to_folder( IS_stack,\
-                        'C:\\Users\\pczbw2\\Desktop\\TEMP\\Test',\
-                        'test',\
-                         IS_length,\
-                         '.tiff' )
+# Create output project.
+create_DIALS_project( IS_stack, IS_length, save_path )
+#create_PETS2_project( IS_stack, IS_length, save_path )
 
 # Display the IS image stack.
 IS_stack.ShowImage()

@@ -162,9 +162,10 @@ class DataReductionVariables():
         return
     
     
-    def _read_CIF( self ):
+    def _read_CIF( self, path, name ):
         # Read the metadata from the 3DED experiment.
-        file = open( 'C:\\Users\\pczbw2\\Desktop\\TEMP\\test.cif' )
+        print( path + '\\' + name )
+        file = open( (path + '\\' + name) )
         exp_data = file.read()
         file.close()
         return exp_data
@@ -210,10 +211,12 @@ class DataReductionVariables():
         return
 
 
+img = DM.GetFrontImage()
+path = 'X:\\BLW\\GMED_test\\'
 variables = DataReductionVariables()
 
 #test = _write_DIALS_project( variables )
 
-test = variables._read_CIF()
-floats = variables._get_exp_floats( test )
+cif_data = variables._read_CIF( path, 'SH22_02.cif' )
+floats = variables._get_exp_floats( cif_data )
 variables._store_exp_data( floats )
