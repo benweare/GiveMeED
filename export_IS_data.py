@@ -19,16 +19,6 @@ def _open_image( file_path ):
     return img
 
 
-#def _save_as_tiff( imageref, path ):
-#    script_string = 'string format = "TIFF Format"\n'\
-#    'string path = "' + path + '"\n'\
-#    'imageDocument doc = dm_image.ImageGetOrCreateImageDocument()\n'\
-#    'doc.ImageDocumentSaveToFile( format , path )'
-#    print( script_string )
-#    DM.ExecuteScriptString( script_string )
-#    return
-
-
 def _does_directory_exist( target_path ):
     exists = os.path.exists( target_path )
     if exists == False:
@@ -117,15 +107,6 @@ def _save_IS_as_stack( input, name, ext, file_path ):
     save_path = file_path + '\\' + name + ext
     input.SaveAsGatan( save_path )
     return
-
-
-# WIP
-#def _bin_array( input, size, bin_x, bin_y ):
-#    new_shape = size[0]/bin_x, size[1]/bin_y
-#    
-#    shape = (new_shape[0], arr.shape[0] // new_shape[0],
-#             new_shape[1], arr.shape[1] // new_shape[1])
-#    return input.reshape( shape ).mean(-1).mean(1)
 
 
 def IS_to_stack( folder_path, **kwargs ):
@@ -245,10 +226,11 @@ class DataReductionVariables():
         return
     
     
-    def _read_CIF( self, path, name ):
+    def _read_CIF( self, path ) #, name ):
         # Read the metadata from the 3DED experiment.
-        print( path + '\\' + name )
-        file = open( (path + '\\' + name) )
+        #print( path + '\\' + name )
+        #file = open( (path + '\\' + name) )
+        file = open( path )
         exp_data = file.read()
         file.close()
         return exp_data
@@ -387,10 +369,10 @@ def _write_PETS2_project( vars, files_list ):
     return output
 
 # Functions to write projects.
-def create_DIALS_project( IS_stack, IS_length, save_path, **kwargs ):
+def create_DIALS_project( IS_stack, IS_length, save_path, cif_path, **kwargs ):
     ''' Save IS data as a DIALS project.'''
     
-    name = kwargs.get('name', 'experiment')
+    name = kwargs.get('name', 'exp')
     
     print( 'Starting.\n' )
     
@@ -399,7 +381,7 @@ def create_DIALS_project( IS_stack, IS_length, save_path, **kwargs ):
     
     # Read in variables from experiment.
     exp_variables = DataReductionVariables()
-    cif_data = exp_variables._read_CIF( save_path, 'test_00_0.cif' )
+    cif_data = exp_variables._read_CIF( cif_path )
     floats = exp_variables._get_exp_floats( cif_data )
     exp_variables._store_exp_data( floats )
     
@@ -415,7 +397,7 @@ def create_DIALS_project( IS_stack, IS_length, save_path, **kwargs ):
     return
 
 
-def create_PETS2_project( IS_stack, IS_length, save_path, **kwargs ):
+def create_PETS2_project( IS_stack, IS_length, save_path, cif_path, **kwargs ):
     '''
     Save IS data as a PETS2 project.
     '''
@@ -449,19 +431,19 @@ def create_PETS2_project( IS_stack, IS_length, save_path, **kwargs ):
 
 ## Scripts start here
 # File path. Needs \\ to work.
-raw_data = 'X:\\BLW\\GMED_test\\'
-save_path = 'X:\\BLW\\GMED_test'
-name = 'test_00'
+#raw_data = 'X:\\BLW\\GMED_test\\'
+#save_path = 'X:\\BLW\\GMED_test'
+#name = 'test_00'
 
 # Open IS data as a stack.
-IS_stack, IS_length = IS_to_stack( (raw_data + name) )
+#IS_stack, IS_length = IS_to_stack( (raw_data + name) )
 
 # Create output project.
-create_DIALS_project( IS_stack, IS_length, save_path )
+#create_DIALS_project( IS_stack, IS_length, save_path )
 #create_PETS2_project( IS_stack, IS_length, save_path )
 
 # Display the IS image stack.
-IS_stack.ShowImage()
+#IS_stack.ShowImage()
 
 
 #_save_IS_as_stack( IS_stack, 'IS_data', '.dm4', 'C:\\Users\\pczbw2\\Desktop\\TEMP\\Test' )
