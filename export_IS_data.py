@@ -226,7 +226,7 @@ class DataReductionVariables():
         return
     
     
-    def _read_CIF( self, path ) #, name ):
+    def _read_CIF( self, path ): #, name ):
         # Read the metadata from the 3DED experiment.
         #print( path + '\\' + name )
         #file = open( (path + '\\' + name) )

@@ -1,12 +1,18 @@
 // Number ChooseMenuItem( String menu_name, String sub_menu_name, String menu_item_name )
 // Throw(  )
 
+/*
+	Required file structure
+	Experiment\exp.CIF
+	Experiment\IS_data
+*/
+
 // Global variables.
-string IS_data_dir = "X:\\"
-string cif_data_dir = "X:\\"
+string IS_data_dir = "C:\\Users\\pczbw2\\Desktop\\TEMP\\SH22_02"
+string cif_data_dir = "test.cif"
 
 // Python script strings (as raw string).
-string python_dir = "r'C:\\Users\\VALUEDGATANCUSTOMER\\Desktop\\temp'"
+string python_dir = "r'C:\\Users\\pczbw2\\Desktop\\git\\GiveMeED'"
 
 string python_import_module
 python_import_module += "import sys\n"
@@ -121,30 +127,37 @@ class myDialog : UIframe
 	void export_IS_dataset( object self )
 	{
 		number export_dials, export_pets
+		string exp_name, IS_path_raw, cif_path_raw
 		
 		self.DLGGetValue( "checkbox_dials", export_dials )
 		self.DLGGetValue( "checkbox_pets", export_pets )
 		self.DLGGetValue( "path_field", IS_data_dir )
-		self.DLGGetValue( "path_field", cif_data_dir )
+		self.DLGGetValue( "cif_field", cif_data_dir )
+		self.DLGGetValue( "notes_field", exp_name )
 		
-		// Import python module.
-		//ExecutePythonScriptString( python_import_module )
+		// Get z-axis size.
+		image image_stack := GetFrontImage()
+		number stack_size = ImageGetDimensionSize(image_stack, 2)
+		
+		// Create raw strings for Python.
+		IS_path_raw = create_raw_string( IS_data_dir )
+		cif_path_raw = create_raw_string( (IS_data_dir + '\\' + cif_data_dir) ) 
+		
+		name = ImageGetName( stack )
 
 		if ( export_dials == 1 )
 		{
 			// Export to DIALS format.
 			result( "Exporting to DIALS format.\n" )
 			
+			
 			// TO DO: get length of IS dataset, pass IS image stack and length to python, variable for experiment name,
 			// update UI with name field and some other stuff
-			string py_export_dials = ""
-			py_export_dials += "create_DIALS_project( IS_stack, IS_length,"+ IS_data_dir+","+ cif_data_dir +", name = 'exp_name' )"
+			string py_export_dials
+			py_export_dials = "IS.create_DIALS_project( " + image_stack + ", " + stack_size +", "+IS_path_raw +","+ cif_path_raw +", name = '"+ exp_name +"' )"
 			
-			string pyscript = python_export_dials + "\n" + python_open_IS
-			//ExecutePythonScriptString( pyscript, 1 )
-			
-			result(pyscript)
-			
+			string pyscript = python_import_module + "\n" + py_export_dials
+			ExecutePythonScriptString( pyscript, 1 )
 		}
 		if ( export_pets == 1 )
 		{
@@ -193,13 +206,14 @@ class myDialog : UIframe
         // Buttons.
         TagGroup browse_button = DLGCreatePushButton("Select IS data", "browse_IS_data").DLGWidth(button_width)
         TagGroup open_button = DLGCreatePushButton("Select CIF", "browse_CIF").DLGWidth(button_width)
-        TagGroup button_group = DLGGroupItems( browse_button, open_button).DLGTableLayout(2, 1, 0)
+        TagGroup button_group = DLGGroupItems( browse_button, open_button ).DLGTableLayout(2, 1, 0)
         TagGroup setup_group = DLGGroupItems(path_group, button_group).DLGTableLayout(1, 6, 0)
         
         setup_box_items.DLGAddElement( setup_group )
         Dialog_UI.DLGAddElement( setup_box )
         
         // Open data group.
+        //TagGroup python_path = DLGCreateStringField( IS_data_dir ).DLGIdentifier("path_field").DLGWidth(entry_width*4)
         TagGroup open_data_button = DLGCreatePushButton("Open IS data", "open_IS_dataset").DLGWidth(button_width)
         Dialog_UI.DLGAddElement( open_data_button )
         
