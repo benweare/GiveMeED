@@ -14,11 +14,11 @@ string cif_data_dir = "test.cif"
 // Python script strings (as raw string).
 string python_dir = "r'C:\\Users\\pczbw2\\Desktop\\git\\GiveMeED'"
 
-string python_import_module
-python_import_module += "import sys\n"
-python_import_module += "cwd = " + python_dir + "\n"
-python_import_module += "sys.path.append( cwd )\n"
-python_import_module += "import export_IS_data as IS"
+string py_import_module
+py_import_module += "import sys\n"
+py_import_module += "cwd = " + python_dir + "\n"
+py_import_module += "sys.path.append( cwd )\n"
+py_import_module += "import export_IS_data as IS"
 
 string create_raw_string( string input )
 {
@@ -113,12 +113,12 @@ class myDialog : UIframe
 		
 		string raw_string = create_raw_string( IS_data_dir )
 		
-		string python_open_IS
-		python_open_IS += "file_path = " + raw_string + "\n"
-		python_open_IS += "IS_stack, IS_length = IS.IS_to_stack( file_path )\n"
-		python_open_IS += "IS_stack.ShowImage()"
+		string py_open_IS
+		py_open_IS += "file_path = " + raw_string + "\n"
+		py_open_IS += "IS_stack, IS_length = IS.IS_to_stack( file_path )\n"
+		py_open_IS += "IS_stack.ShowImage()"
 		
-		string pyscript = python_import_module + "\n" + python_open_IS
+		string pyscript = py_import_module + "\n" + py_open_IS
 		
 		// Asynchronous on background thread.
 		ExecutePythonScriptString( pyscript, 1 )
@@ -128,6 +128,7 @@ class myDialog : UIframe
 	{
 		number export_dials, export_pets
 		string exp_name, IS_path_raw, cif_path_raw
+		string pyscript, py_export_dials, py_export_pets
 		
 		self.DLGGetValue( "checkbox_dials", export_dials )
 		self.DLGGetValue( "checkbox_pets", export_pets )
@@ -141,34 +142,37 @@ class myDialog : UIframe
 		
 		// Create raw strings for Python.
 		IS_path_raw = create_raw_string( IS_data_dir )
-		cif_path_raw = create_raw_string( (IS_data_dir + '\\' + cif_data_dir) ) 
+		result(cif_path_raw)
+		cif_path_raw = create_raw_string( (IS_data_dir + "\\" + cif_data_dir) ) 
 		
-		name = ImageGetName( stack )
-
+		string py_get_front_image = "\ndmImg = DM.GetFrontImage()" + "\n"
+		
+		pyscript = py_import_module + py_get_front_image 
+		
 		if ( export_dials == 1 )
 		{
-			// Export to DIALS format.
 			result( "Exporting to DIALS format.\n" )
-			
-			
-			// TO DO: get length of IS dataset, pass IS image stack and length to python, variable for experiment name,
-			// update UI with name field and some other stuff
-			string py_export_dials
-			py_export_dials = "IS.create_DIALS_project( " + image_stack + ", " + stack_size +", "+IS_path_raw +","+ cif_path_raw +", name = '"+ exp_name +"' )"
-			
-			string pyscript = python_import_module + "\n" + py_export_dials
-			ExecutePythonScriptString( pyscript, 1 )
+			py_export_dials = "IS.create_DIALS_project( dmImg, " + stack_size +", "+IS_path_raw +","+ cif_path_raw +", name = '"+ exp_name +"' )\n"
+		}
+		if ( export_dials == 0 )
+		{
+			py_export_dials = ""
 		}
 		if ( export_pets == 1 )
 		{
-			// Export to PETS2 format.
 			result( "Exporting to PETS2 format.\n" )
+			py_export_pets = "IS.create_PETS2_project( dmImg, " + stack_size +", "+IS_path_raw +","+ cif_path_raw +", name = '"+ exp_name +"' )\n"
+		}
+		if ( export_pets == 0 )
+		{
+			py_export_pets = ""
 		}
 		if ( export_dials == 0 && export_pets == 0 )
 		{
 			result( "Error: select export format.\n" )
-			//ExecutePythonScriptString( python_path_pets2 )
 		}
+		pyscript += py_export_dials + py_export_pets
+		ExecutePythonScriptString( pyscript, 1 )
 		return
 	}
 	void ActOnCheck( object self, TagGroup checkbox )
