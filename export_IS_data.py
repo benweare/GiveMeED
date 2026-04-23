@@ -413,22 +413,28 @@ def create_PETS2_project( IS_stack, IS_length, save_path, cif_path, **kwargs ):
     # Save files to folder.
     print( 'Starting.\n' )
     
-    path = save_path + '\\PETS2' + '\\files'
+    path = save_path + '\\PETS2'
+    _does_directory_exist( path )
+    
+    path = path + '\\files'
     
     # Save files and return list of names.
     files = _save_files_to_folder( IS_stack, path, name,IS_length,'.tiff' )
     
     # Read in variables from experiment.
     exp_variables = DataReductionVariables()
-    cif_data = exp_variables._read_CIF( cif_path )
-    floats = exp_variables._get_exp_floats( floats )
-    exp_variables._store_exp_data( cif_data )
+    try:
+        cif_data = exp_variables._read_CIF( cif_path )
+        floats = exp_variables._get_exp_floats( floats )
+        exp_variables._store_exp_data( cif_data )
+    except:
+        print( "Error: could not read CIF." )
     
     exp_variables.image_center = [IS_stack.GetDimensionSize(0)/2, IS_stack.GetDimensionSize(1)/2]
     
     # Create .pets2 file.
     project_string = _write_PETS2_project( exp_variables, files )
-    _save_project( project_string, (save_path + '//PETS2'), name, '.pts2' )
+    _save_project( project_string, (save_path + '\\PETS2'), name, '.pts2' )
     
     print( 'Finished.\n' )
     
@@ -437,16 +443,19 @@ def create_PETS2_project( IS_stack, IS_length, save_path, cif_path, **kwargs ):
 
 ## Scripts start here
 # File path. Needs \\ to work.
-raw_data = r'C:\Users\pczbw2\Desktop\TEMP\SH22_02'
-save_path = r'C:\Users\pczbw2\Desktop\TEMP\SH22_02'
-#name = 'test_00'
+#raw_data = r'C:\Users\pczbw2\Desktop\TEMP\SH22_02'
+#save_path = r'C:\Users\pczbw2\Desktop\TEMP\SH22_02\test.cif'
+
+#IS_stack = DM.GetFrontImage()
+
+# ISSUE WITH SAVE PATH
 
 # Open IS data as a stack.
 #IS_stack, IS_length = IS_to_stack( (raw_data + name) )
 
 # Create output project.
 #create_DIALS_project( IS_stack, IS_length, save_path )
-create_PETS2_project( IS_stack, IS_length, save_path, save_path )
+#create_PETS2_project( IS_stack, 20, raw_data, save_path )
 
 # Display the IS image stack.
 #IS_stack.ShowImage()
