@@ -3,7 +3,7 @@
 // B L Weare, @NMRC
 // Draws a standard set of resolution rings on the front image
 // Can tweak how many rings & diameter by editing the matrix
-//Angstroms to nm-1
+// Angstroms to nm-1
 number ConvertToRecNM( number num2convert )
 { 
 	number convertednum = 1/(num2convert*0.1)
@@ -225,6 +225,9 @@ void DrawAxis( object self )
         
         Dialog_UI.DLGAddElement( rr_box )
         
+        TagGroup footer = DLGCreateLabel("GMED: AutoResRings")
+        Dialog_UI.DLGAddElement(footer)
+        
         return Dialog_UI
   }
 
@@ -246,7 +249,7 @@ void Invoke( )
 {
 	object threadObject = alloc( ResRingsThread )
 	object dlgObject = alloc( myDialog ).Init( threadObject.ScriptObjectGetID() )
-	dlgObject.display( "AutoResRings" ) //title of UI
+	dlgObject.display( "Resolution Rings" ) //title of UI
 }
 
 // Script starts here

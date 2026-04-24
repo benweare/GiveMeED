@@ -333,24 +333,24 @@ string format_metadata( string ISDataPath, string saveName, string notes, image 
 	"_cell_measurement_temperature ?" +"\n"+\
 	"_diffrn_measurement_details" +"\n"+\
 	";" +"\n"+\
-	"Save Location: " + ISDataPath + "\n"+\
-	"IS Data: " + saveName + "\n"+\
-	"Spot Size: " + spot_size + "\n"+\
-	"Camera length (mm): " + camera_length + "\n"+\
-	"Camera pixel size x/y (um): (" + phys_pixelsize_x + ", " + phys_pixelsize_y + ")\n"+\
-	"Scale (nm-1 px-1): " + scale_x + ", " + scale_y + "\n"+\
-	"Image size x/y (px): (" + ImageGetDimensionSize(img, 0) + ", " + ImageGetDimensionSize(img, 1) + ")\n"+\
-	"Date and time: " + timestamp + "\n"+\
-	"Start angle (deg): " + start_angle + "\n"+\
-	"End angle (deg): " + end_angle +  "\n"+\
-	"Rotation range (deg): " + (end_angle - start_angle) + "\n"+\
-	"Data collection time (s): " + total_time + "\n"+\
-	"Frame Rate (fps): " + frame_rate + "\n"+\
-	"Exposure (s): " + 1/frame_rate + "\n"+\
-	"Number of frames : " + no_frames + "\n"+\
-	"Angle per frame (deg): " + abs( end_angle - start_angle ) / no_frames + "\n"+\
-	"Rotation axis (deg): " + tilt_axis + "\n"+\
-	"Notes:" + notes + "\n"+\
+	"_gmed_file_path " + ISDataPath + saveName + "\n"+\
+	"_gmed_spot_size " + spot_size + "\n"+\
+	"_gmed_camera_length " + camera_length + "\n"+\
+	"_gmed_camera_pixel_size_x "+ phys_pixelsize_x + "\n"+\
+	"_gmed_camera_pixel_size_y "+ phys_pixelsize_y + "\n"+\
+	"_gmed_pixel_scale_nm " + scale_x + ", " + scale_y + "\n"+\
+	"_gmed_image_size_px " + ImageGetDimensionSize(img, 0) + ", " + ImageGetDimensionSize(img, 1) + "\n"+\
+	"_gmed_date_and_time " + timestamp + "\n"+\
+	"_gmed_start_angle " + start_angle + "\n"+\
+	"_gmed_end_angle " + end_angle +  "\n"+\
+	"_gmed_rotation_range" + (end_angle - start_angle) + "\n"+\
+	"_gmed_collection_time " + total_time + "\n"+\
+	"_gmed_fps " + frame_rate + "\n"+\
+	"_gmed_exposure_secs " + 1/frame_rate + "\n"+\
+	"_gmed_total_frames : " + no_frames + "\n"+\
+	"_gmed_angle_per_frame " + abs( end_angle - start_angle ) / no_frames + "\n"+\
+	"_gmed_rotation_axis " + tilt_axis + "\n"+\
+	"_gmed_notes " + notes + "\n"+\
 	";\n"
 	
 	return output
@@ -814,7 +814,7 @@ class myDialog : UIframe
         taggroup control_group = DLGGroupItems(start_button, stop_button).DLGTableLayout(3, 1, 0).DLGAnchor("Center").DLGExpand("X")
         control_box_items.DLGAddElement(control_group)
         Dialog_UI.DLGAddElement(control_box)
-        TagGroup footer = DLGCreateLabel(" ")
+        TagGroup footer = DLGCreateLabel("GMED")
         Dialog_UI.DLGAddElement(footer)
         
         return Dialog_UI
