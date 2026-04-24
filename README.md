@@ -8,9 +8,22 @@ GiveMeED has been used successfully with a JEOL 2100Plus TEM with Gatan OneView 
 These scripts are associated with the following publicatons, please include a citation in your own works if you found these scripts useful: 
 http://arxiv.org/abs/2507.10247
 
+## Installation
+
+GiveMeED can be used in three ways:
+
+1) As a standalone script. Open the script in DigitalMicrograph and press execute to get started.
+
+2) Installed as scripts, e.g. by using the supplied installation script within DigitalMicrograph.
+
+3) Installed as a plugin, either adding the supplied plugin to DigitalMicrograph or using the supplied script to create a plugin.
+
+
+Installing GiveMeED to DigitalMicrograph may be preferred.
+
 ## Usage Instructions for GiveMeED
 
-<img src="https://github.com/benweare/GiveMeED/blob/main/assets/GUI.png" width="400" alt="Graphical User Interface" />
+<img src="https://github.com/benweare/GiveMeED/blob/main/assets/GUI.png" width="400" alt="GMED Graphical User Interface" />
 
 Please see the associated preprint for greater context: http://arxiv.org/abs/2507.10247
 
@@ -25,9 +38,20 @@ Step-by-step instructions for GiveMeED:
 3.	Confirm that the specimen is at eucentric height and remains visible over the tilt range entered into the “Tilt Range” container. Pressing the “Go to Start” and “Go to End” buttons will rotate the stage to the value in the corresponding box. “Tilt Neutral” sets the stage angle to 0 degrees. 
 4.	Put the microscope into diffraction mode and press “Start 3DED” to perform data collection. Data and metadata is automatically saved to the file path in Step 2. 
 
+## ExportInsitu
+
+<img src="https://github.com/benweare/GiveMeED/blob/main/assets/GUI2.png" width="400" alt="ExportInSitu Graphical User Interface" />
+
+ExportInSitu provides a convienient way to convert DigitialMicrograph's InSitu file format to a format compatible with data reduction software. Currently PETS2 and DIALS formats are supported, but this could be easily extended in the future.
+
+It works by opening the InSitu dataset in DigitalMicrograph as a stack. At this point the user may perform post-capture processing, such as binning or cropping. The dataset is then exported as a .dm4 stack, a directory of .tif files, or both. The experimental metadata is read from the CIF written by GiveMeED, which is used to write "import.phil" or .pets2 project. 
+
+ExportInSitu uses the included Python module export_insitu. This can be installed into DigitalMicrograph's Python virtual environment, or the module can be imported at runtime by setting the path to the module location witin ExportInSitu.
+
 ## List of Scripts 
 - GiveMeED
 - AutoResRings
-- writePETS2import
+- GMED_installer
+- ExportInSitu
 
 Some scripts are optionally available without a user interface. 

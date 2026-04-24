@@ -814,7 +814,7 @@ class myDialog : UIframe
         taggroup control_group = DLGGroupItems(start_button, stop_button).DLGTableLayout(3, 1, 0).DLGAnchor("Center").DLGExpand("X")
         control_box_items.DLGAddElement(control_group)
         Dialog_UI.DLGAddElement(control_box)
-        TagGroup footer = DLGCreateLabel(" ")
+        TagGroup footer = DLGCreateLabel("GMED")
         Dialog_UI.DLGAddElement(footer)
         
         return Dialog_UI

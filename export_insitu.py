@@ -1,16 +1,16 @@
-# A little glue to go from DM to PETS2, DIALS, etc
-# Logic:
-# To do:
-# 1 - GUI
-# 2 - Fix PETS2 keywords
-# 3 - Fix parsing of 3DED.cif
+'''
+Module to handle In-Situ datasets automatically.
+
+Allows importing as a stack, and exporting.
+'''
+# BLW @ nmRC, 24-04-2026.
 
 
 import DigitalMicrograph as DM
 import numpy as np
 import os
 from os import path
-import glob
+
 
 def _open_image( file_path ):
     # Util for opening images im DM.
@@ -140,7 +140,6 @@ def IS_to_stack( folder_path, **kwargs ):
 
 def _save_files_to_folder( stack, target_path, base_name, length, ext ):
     # Save input images as files to folder.
-    
     # [X, Y, Z]
     size = [stack.GetDimensionSize(0), stack.GetDimensionSize(1), stack.GetDimensionSize(2)]
     
@@ -373,7 +372,9 @@ def _write_PETS2_project( vars, files_list ):
 
 # Functions to write projects.
 def create_DIALS_project( IS_stack, IS_length, save_path, cif_path, **kwargs ):
-    ''' Save IS data as a DIALS project.'''
+    '''
+    Save IS data as a DIALS project.
+    '''
     
     name = kwargs.get('name', 'exp')
     
@@ -439,26 +440,3 @@ def create_PETS2_project( IS_stack, IS_length, save_path, cif_path, **kwargs ):
     print( 'Finished.\n' )
     
     return
-
-
-## Scripts start here
-# File path. Needs \\ to work.
-#raw_data = r'C:\Users\pczbw2\Desktop\TEMP\SH22_02'
-#save_path = r'C:\Users\pczbw2\Desktop\TEMP\SH22_02\test.cif'
-
-#IS_stack = DM.GetFrontImage()
-
-# ISSUE WITH SAVE PATH
-
-# Open IS data as a stack.
-#IS_stack, IS_length = IS_to_stack( (raw_data + name) )
-
-# Create output project.
-#create_DIALS_project( IS_stack, IS_length, save_path )
-#create_PETS2_project( IS_stack, 20, raw_data, save_path )
-
-# Display the IS image stack.
-#IS_stack.ShowImage()
-
-
-#_save_IS_as_stack( IS_stack, 'IS_data', '.dm4', 'C:\\Users\\pczbw2\\Desktop\\TEMP\\Test' )

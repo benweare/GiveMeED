@@ -1,24 +1,7 @@
-// Number ChooseMenuItem( String menu_name, String sub_menu_name, String menu_item_name )
-// Throw(  )
-
-/*
-	Required file structure
-	Experiment\exp.CIF
-	Experiment\IS_data
-*/
-
-// Global variables.
-string IS_data_dir = "C:\\Users\\pczbw2\\Desktop\\TEMP\\SH22_02"
-string cif_data_dir = "test.cif"
-
-// Python script strings (as raw string).
-string python_dir = "r'C:\\Users\\pczbw2\\Desktop\\git\\GiveMeED'"
-
-string py_import_module
-py_import_module += "import sys\n"
-py_import_module += "cwd = " + python_dir + "\n"
-py_import_module += "sys.path.append( cwd )\n"
-py_import_module += "import export_IS_data as IS"
+// ExportInSitu
+// Requires installation of export_insitu.py
+// Or, set the file path below to the directory containing
+// the Python module.
 
 string create_raw_string( string input )
 {
@@ -43,12 +26,33 @@ string create_raw_string( string input )
 		raw = raw + "''\\\\'"
 		
 	}
+	if ( input == "\\" )
+	{
+		raw = raw = raw + "'\\\\'"
+	}
 	else
 	{
 		raw = raw + "'"
 	}
 	return raw
 }
+
+// Global variables.
+string IS_data_dir = "C:\\3DED_data"
+string cif_data_dir = "3DED.cif"
+string python_dir = "path\\to\\python"
+string py_module = "export_insitu"
+
+python_dir = create_raw_string( python_dir )
+
+string py_import_module
+py_import_module += "import sys\n"
+py_import_module += "cwd = " + python_dir + "\n"
+py_import_module += "try:\n"
+py_import_module += "	import "+ py_module +" as IS\n"
+py_import_module += "except:\n"
+py_import_module += "	sys.path.append( cwd )\n"
+py_import_module += "	import "+ py_module +" as IS"
 
 
 //// UI block ////
@@ -208,18 +212,13 @@ class myDialog : UIframe
         TagGroup path_group = DLGGroupItems( IS_path_group, cif_path_group ).DLGTableLayout(1, 2, 0)
         
         // Buttons.
-        TagGroup browse_button = DLGCreatePushButton("Select IS data", "browse_IS_data").DLGWidth(button_width)
-        TagGroup open_button = DLGCreatePushButton("Select CIF", "browse_CIF").DLGWidth(button_width)
+        TagGroup browse_button = DLGCreatePushButton("Browse...", "browse_IS_data").DLGWidth(button_width)
+        TagGroup open_button = DLGCreatePushButton("Open IS data", "open_IS_dataset").DLGWidth(button_width)
         TagGroup button_group = DLGGroupItems( browse_button, open_button ).DLGTableLayout(2, 1, 0)
         TagGroup setup_group = DLGGroupItems(path_group, button_group).DLGTableLayout(1, 6, 0)
         
         setup_box_items.DLGAddElement( setup_group )
         Dialog_UI.DLGAddElement( setup_box )
-        
-        // Open data group.
-        //TagGroup python_path = DLGCreateStringField( IS_data_dir ).DLGIdentifier("path_field").DLGWidth(entry_width*4)
-        TagGroup open_data_button = DLGCreatePushButton("Open IS data", "open_IS_dataset").DLGWidth(button_width)
-        Dialog_UI.DLGAddElement( open_data_button )
         
         // Variables group
         TagGroup variables_box_items
@@ -227,7 +226,7 @@ class myDialog : UIframe
         
 		TagGroup notes_field
         label = DLGCreateLabel("Name:").DLGWidth(label_width)
-        notes_field = DLGCreateStringField( "experiment_name" ).DLGIdentifier("notes_field").DLGWidth(entry_width*4)
+        notes_field = DLGCreateStringField( "3DED_experiment" ).DLGIdentifier("notes_field").DLGWidth(entry_width*4)
         TagGroup notes_group = DLGGroupItems(label, notes_field).DLGTableLayout(2, 1, 0)
         
         // Checkboxes
@@ -238,20 +237,18 @@ class myDialog : UIframe
         
         // Buttons
         TagGroup export_button = DLGCreatePushButton("Export IS Data", "export_IS_dataset").DLGWidth(button_width)
-        
         TagGroup variables_group = DLGGroupItems( notes_group, checkbox_group, export_button ).DLGTableLayout(1, 3, 0)
-        
         
         variables_box_items.DLGAddElement( variables_group )
         Dialog_UI.DLGAddElement( variables_box )
         
-        
-        TagGroup footer = DLGCreateLabel(" ")
+        TagGroup footer = DLGCreateLabel("GMED: ExportInSitu")
         Dialog_UI.DLGAddElement(footer)
         
         return Dialog_UI
   }
-  
+
+
   // Init the UI.
   object Init(object self, number callThreadID )
   {
@@ -264,6 +261,7 @@ class myDialog : UIframe
     return self.super.init( self.CreateDLG() )
   }
 }
+
 
 // Launch threads.
 void Invoke( string program_name )
@@ -279,7 +277,5 @@ void Invoke( string program_name )
 
 // Script starts here.
 string dialogue_name = "Export 3DED Data"
-// Python scripts
-
 Invoke( dialogue_name )
 // End.
