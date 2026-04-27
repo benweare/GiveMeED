@@ -20,7 +20,7 @@ AddScriptFileToMenu( (script_path + script_name), "AutoResolutionRings", "3DED",
 // Install as a package.
 AddScriptFileToPackage( (script_path + script_name),package, 0, "user_plugin", "GiveMeED", "3DED","", 0 )
 
-script_name = "\\export_insitu.s"
+script_name = "\\ExportInSitu.s"
 AddScriptFileToPackage( (script_path + script_name),package, 0, "user_plugin", "Export Insitu", "3DED","", 0 )
 
 script_name = "\\Go2Alpha.s"
