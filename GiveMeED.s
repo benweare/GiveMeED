@@ -658,7 +658,6 @@ class myDialog : UIframe
 	}
 	void reset_pressed( object self )//reset stage
 	{
-		EMSetBeamBlanked( true )
 		EMSetStageAlpha( 0 )
 		self.Setelementisenabled( "start_pressed", false )
 		self.Setelementisenabled( "stop_pressed", true )
