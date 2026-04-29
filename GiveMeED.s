@@ -444,9 +444,10 @@ void ContinousTilt( number fiddle, number alpha_start, number alpha_end, number 
 		}
 
 	//End IS capture
+	CM_InSitu_StopRecord( )
 	end_angle = EMGetStageAlpha( )
 	time_2 = GetHighResTickCount( )
-	CM_InSitu_StopRecord( )
+	
 	result( "IS Cease" + "\n" )
 
 	EMSetBeamBlanked( 1 )//blank beam
