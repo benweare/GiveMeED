@@ -17,7 +17,7 @@ void GetImageCenter( image img, number &x, number &y )
 	return
 }
 //Create ROI
-ROI CreateResRing( number radlabel, number radius, number x, number y, number r, number g, number b )
+ROI CreateResRing( number radlabel, number radius, number x, number y, number r, number g, number b, number ice )
 {
 	ROI resRing = NewROI( )
 	ROISetCircle(resRing, x, y, radius)
@@ -27,7 +27,7 @@ ROI CreateResRing( number radlabel, number radius, number x, number y, number r,
 	
 	string label = radlabel + " A"
 	ROISetColor( resRing, r, g, b) //RBG in 0-1
-	if (radlabel != 100)
+	if (radlabel != 100 && ice != 1)
 		ROISetLabel( resRing, label )
 	ROISetMoveable( resRing, 0 )
 	ROISetVolatile( resRing, 0 )
@@ -54,6 +54,17 @@ image resolution_rings := [1,6] : {
 	{1},
 	{0.8}//,
 	//{0.6}
+}
+image ice_rings := [1,9] : {
+	{3.897},
+	{3.669},
+	{3.441},
+	{2.671},
+	{2.249},
+	{2.072},
+	{1.197},
+	{1.88},
+	{1.72}
 }
 // Draw the tilt axis onto the image.
 void draw_tilt_axis( number angle, number cent_x, number cent_y, image img )
@@ -82,9 +93,12 @@ void draw_tilt_axis( number angle, number cent_x, number cent_y, image img )
 	ROISetColor( tilt_axis, r, g, b )
 }
 // Draw ROIs on image
-void draw( image img, number rval, number gval, number bval, number img_center_x, number img_center_y )
+void draw( image img, number rval, number gval, number bval, number img_center_x, number img_center_y, number ice )
 {
 	ImageDisplay imgDisplay = img.ImageGetImageDisplay(0)
+	
+	if (ice == 0)
+	{
 	number array_length = ImageGetDimensionSize(Resolution_Rings, 1)//y dimentsion of array
 
 	ROI ring
@@ -96,7 +110,7 @@ void draw( image img, number rval, number gval, number bval, number img_center_x
 			number scale = ScaleInfo( )
 			number rawRadius = ConvertToRecNM( ringRadius )
 			number pixRadius = rawRadius / scale
-			ring = CreateResRing( ringRadius, pixRadius, img_center_x, img_center_y, rval, gval, bval )
+			ring = CreateResRing( ringRadius, pixRadius, img_center_x, img_center_y, rval, gval, bval, ice )
 			imgDisplay.ImageDisplayAddROI( ring )
 		}
 		catch
@@ -105,6 +119,30 @@ void draw( image img, number rval, number gval, number bval, number img_center_x
 		}
 	}
 	CloseImage(Resolution_Rings)
+	}
+	if (ice == 1)
+	{
+	number array_length = ImageGetDimensionSize(ice_rings, 1)//y dimentsion of array
+
+	ROI ring
+	for (number i = 0; i < array_length ; i++ )//less than length of array
+	{
+		try
+		{
+			number ringRadius = GetPixel(ice_rings, 0, i )//element i of array (counts from 0)
+			number scale = ScaleInfo( )
+			number rawRadius = ConvertToRecNM( ringRadius )
+			number pixRadius = rawRadius / scale
+			ring = CreateResRing( ringRadius, pixRadius, img_center_x, img_center_y, rval, gval, bval, ice )
+			imgDisplay.ImageDisplayAddROI( ring )
+		}
+		catch
+		{
+			result("something went wrong" + "\n")
+		}
+	}
+	CloseImage(Ice_Rings)
+	}
 }
 
 // Remove ROIs
@@ -162,7 +200,18 @@ void DrawRings( object self )
 	self.DLGGetValue( "y_cent", img_center_y )
 	}
 	img := GetFrontImage()
-	draw( img, 1, 0, 0, img_center_x, img_center_y )
+	number ice = 0
+	draw( img, 1, 0, 0, img_center_x, img_center_y, ice )
+}
+void DrawIceRings( object self )
+{
+	{ 
+	self.DLGGetValue( "x_cent", img_center_x )
+	self.DLGGetValue( "y_cent", img_center_y )
+	}
+	img := GetFrontImage()
+	number ice = 1
+	draw( img, 0, 0, 1, img_center_x, img_center_y, ice )
 }
 void delete_rings( object self )
 {
@@ -214,6 +263,7 @@ void DrawAxis( object self )
         
         //Alpha buttons - add a function for go to start angle of alpha 
         TagGroup rrbutton = DLGCreatePushButton( "Draw Rings", "DrawRings" ).DLGWidth(button_width)
+        TagGroup ice_button = DLGCreatePushButton( "Draw Ice Rings", "DrawIceRings" ).DLGWidth(button_width)
         TagGroup rr_del = DLGCreatePushButton( "Remove Rings", "delete_rings" ).DLGWidth(button_width)
         TagGroup tabutton = DLGCreatePushButton( "Draw Axis", "DrawAxis" ).DLGWidth(button_width)
         TagGroup ta_del = DLGCreatePushButton( "Remove Axis", "delete_axis" ).DLGWidth(button_width)
@@ -221,6 +271,7 @@ void DrawAxis( object self )
         
         TagGroup rr_group = DLGGroupItems( ta_group, pattern_box, rr_buttons ).DLGTableLayout( 1, 4, 0 )
         rr_box_items.DLGAddElement( rr_group )
+        rr_box_items.DLGAddElement( ice_button )
         
         
         Dialog_UI.DLGAddElement( rr_box )
