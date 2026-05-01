@@ -343,7 +343,7 @@ string format_metadata( string ISDataPath, string saveName, string notes, image 
 	"_gmed_date_and_time " + timestamp + "\n"+\
 	"_gmed_start_angle " + start_angle + "\n"+\
 	"_gmed_end_angle " + end_angle +  "\n"+\
-	"_gmed_rotation_range" + (end_angle - start_angle) + "\n"+\
+	"_gmed_rotation_range " + (end_angle - start_angle) + "\n"+\
 	"_gmed_collection_time " + total_time + "\n"+\
 	"_gmed_fps " + frame_rate + "\n"+\
 	"_gmed_exposure_secs " + 1/frame_rate + "\n"+\
@@ -444,9 +444,10 @@ void ContinousTilt( number fiddle, number alpha_start, number alpha_end, number 
 		}
 
 	//End IS capture
+	CM_InSitu_StopRecord( )
 	end_angle = EMGetStageAlpha( )
 	time_2 = GetHighResTickCount( )
-	CM_InSitu_StopRecord( )
+	
 	result( "IS Cease" + "\n" )
 
 	EMSetBeamBlanked( 1 )//blank beam
@@ -657,7 +658,6 @@ class myDialog : UIframe
 	}
 	void reset_pressed( object self )//reset stage
 	{
-		EMSetBeamBlanked( true )
 		EMSetStageAlpha( 0 )
 		self.Setelementisenabled( "start_pressed", false )
 		self.Setelementisenabled( "stop_pressed", true )

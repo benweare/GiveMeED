@@ -26,10 +26,6 @@ string create_raw_string( string input )
 		raw = raw + "''\\\\'"
 		
 	}
-	if ( input == "\\" )
-	{
-		raw = raw = raw + "'\\\\'"
-	}
 	else
 	{
 		raw = raw + "'"

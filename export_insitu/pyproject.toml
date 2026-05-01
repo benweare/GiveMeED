@@ -1,0 +1,31 @@
+[project]
+name = "export_insitu"
+version = "2.0.0"
+authors = [
+  { name="Benjamin L Weare", email="benjamin.weare1@nottingham.ac.uk" }]
+description = "Python to export InSitu data from DigitalMicrograph."
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent"]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+
+keywords = ["TEM", "diffraction", "microscopy","electron microscopy"]
+
+#classifiers = [
+#  "Development Status :: 4 - Beta",
+#  "Operating System :: OS Independent",
+#  "Programming Language :: Python :: 3",
+#  "Topic :: Scientific/Engineering",
+#  "Topic :: Scientific/Engineering :: Physics",
+#  "Topic :: Scientific/Engineering :: Visualization"]
+
+depedancies = []
+
+[project.urls]
+  repository = "https://github.com/benweare/GiveMeED"
+
+[build-system]
+requires = ["hatchling>=1.28"]
+build-backend = "hatchling.build"
