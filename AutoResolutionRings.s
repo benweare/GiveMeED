@@ -17,7 +17,7 @@ void GetImageCenter( image img, number &x, number &y )
 	return
 }
 //Create ROI
-ROI CreateResRing( number radlabel, number radius, number x, number y, number r, number g, number b, number ice )
+ROI CreateResRing( number radlabel, number radius, number x, number y, number r, number g, number b )
 {
 	ROI resRing = NewROI( )
 	ROISetCircle(resRing, x, y, radius)
@@ -27,7 +27,7 @@ ROI CreateResRing( number radlabel, number radius, number x, number y, number r,
 	
 	string label = radlabel + " A"
 	ROISetColor( resRing, r, g, b) //RBG in 0-1
-	if (radlabel != 100 && ice != 1)
+	if (radlabel != 100)
 		ROISetLabel( resRing, label )
 	ROISetMoveable( resRing, 0 )
 	ROISetVolatile( resRing, 0 )
@@ -55,16 +55,13 @@ image resolution_rings := [1,6] : {
 	{0.8}//,
 	//{0.6}
 }
-image ice_rings := [1,9] : {
-	{3.897},
-	{3.669},
-	{3.441},
-	{2.671},
-	{2.249},
-	{2.072},
-	{1.197},
-	{1.88},
-	{1.72}
+image ice_rings := [1,6] : {
+	{100},
+	{3.78},
+	{2.228},
+	{1.93},
+	{1.47},
+	{1.31}
 }
 // Draw the tilt axis onto the image.
 void draw_tilt_axis( number angle, number cent_x, number cent_y, image img )
@@ -93,55 +90,49 @@ void draw_tilt_axis( number angle, number cent_x, number cent_y, image img )
 	ROISetColor( tilt_axis, r, g, b )
 }
 // Draw ROIs on image
-void draw( image img, number rval, number gval, number bval, number img_center_x, number img_center_y, number ice )
+void draw( object ui, image img, number rval, number gval, number bval, number img_center_x, number img_center_y )
 {
+	number rr00, rr01, rr02, rr03, rr04, rr05
+	number ir00, ir01, ir02, ir03, ir04
+	
+	// Resolution rings.
+	ui.DLGGetValue( "rr00", rr00 )
+	ui.DLGGetValue( "rr01", rr01 )
+	ui.DLGGetValue( "rr02", rr02 )
+	ui.DLGGetValue( "rr03", rr03 )
+	ui.DLGGetValue( "rr04", rr04 )
+	// Ice rings.
+	ui.DLGGetValue( "ir00", ir00 )
+	ui.DLGGetValue( "ir01", ir01 )
+	ui.DLGGetValue( "ir02", ir02 )
+	ui.DLGGetValue( "ir03", ir03 )
+	ui.DLGGetValue( "ir04", ir04 )
+	
+	// Then do something to draw all rings that are set to True
+	
+	
 	ImageDisplay imgDisplay = img.ImageGetImageDisplay(0)
 	
-	if (ice == 0)
-	{
 	number array_length = ImageGetDimensionSize(Resolution_Rings, 1)//y dimentsion of array
+	
+	number ringRadius, scale, rawRadius, pixRadius
 
 	ROI ring
 	for (number i = 0; i < array_length ; i++ )//less than length of array
 	{
 		try
 		{
-			number ringRadius = GetPixel(resolution_rings, 0, i )//element i of array (counts from 0)
-			number scale = ScaleInfo( )
-			number rawRadius = ConvertToRecNM( ringRadius )
-			number pixRadius = rawRadius / scale
-			ring = CreateResRing( ringRadius, pixRadius, img_center_x, img_center_y, rval, gval, bval, ice )
+			ringRadius = GetPixel(resolution_rings, 0, i )//element i of array (counts from 0)
+			scale = ScaleInfo( )
+			rawRadius = ConvertToRecNM( ringRadius )
+			pixRadius = rawRadius / scale
+			ring = CreateResRing( ringRadius, pixRadius, img_center_x, img_center_y, rval, gval, bval )
 			imgDisplay.ImageDisplayAddROI( ring )
 		}
 		catch
 		{
 			result("something went wrong" + "\n")
 		}
-	}
-	CloseImage(Resolution_Rings)
-	}
-	if (ice == 1)
-	{
-	number array_length = ImageGetDimensionSize(ice_rings, 1)//y dimentsion of array
-
-	ROI ring
-	for (number i = 0; i < array_length ; i++ )//less than length of array
-	{
-		try
-		{
-			number ringRadius = GetPixel(ice_rings, 0, i )//element i of array (counts from 0)
-			number scale = ScaleInfo( )
-			number rawRadius = ConvertToRecNM( ringRadius )
-			number pixRadius = rawRadius / scale
-			ring = CreateResRing( ringRadius, pixRadius, img_center_x, img_center_y, rval, gval, bval, ice )
-			imgDisplay.ImageDisplayAddROI( ring )
-		}
-		catch
-		{
-			result("something went wrong" + "\n")
-		}
-	}
-	CloseImage(Ice_Rings)
 	}
 }
 
@@ -195,14 +186,13 @@ class myDialog : UIframe
 //Button functions
 void DrawRings( object self )
 {
-	{ 
 	self.DLGGetValue( "x_cent", img_center_x )
 	self.DLGGetValue( "y_cent", img_center_y )
-	}
+	
 	img := GetFrontImage()
-	number ice = 0
-	draw( img, 1, 0, 0, img_center_x, img_center_y, ice )
+	draw( self, img, 1, 0, 0, img_center_x, img_center_y )
 }
+/*
 void DrawIceRings( object self )
 {
 	{ 
@@ -213,6 +203,7 @@ void DrawIceRings( object self )
 	number ice = 1
 	draw( img, 0, 0, 1, img_center_x, img_center_y, ice )
 }
+*/
 void delete_rings( object self )
 {
 	image img := GetFrontImage()
@@ -233,7 +224,15 @@ void DrawAxis( object self )
 	img := GetFrontImage()
 	draw_tilt_axis( axis_value, img_center_x, img_center_y, img )
 }
-
+void UpdateCenter( object self )
+{
+	number x, y
+	image img := GetFrontImage()
+	GetImageCenter( img, x, y )
+	
+	self.DLGValue( "x_cent", x )
+	self.DLGValue( "y_cent", y )
+}
   TagGroup CreateDLG( object self )//copied from GiveMeED
   {
 		number label_width = 10
@@ -263,7 +262,8 @@ void DrawAxis( object self )
         
         //Alpha buttons - add a function for go to start angle of alpha 
         TagGroup rrbutton = DLGCreatePushButton( "Draw Rings", "DrawRings" ).DLGWidth(button_width)
-        TagGroup ice_button = DLGCreatePushButton( "Draw Ice Rings", "DrawIceRings" ).DLGWidth(button_width)
+        //TagGroup ice_button = DLGCreatePushButton( "Draw Ice Rings", "DrawIceRings" ).DLGWidth(button_width)
+        TagGroup update_center_button = DLGCreatePushButton( "Update Center", "UpdateCenter" ).DLGWidth(button_width)
         TagGroup rr_del = DLGCreatePushButton( "Remove Rings", "delete_rings" ).DLGWidth(button_width)
         TagGroup tabutton = DLGCreatePushButton( "Draw Axis", "DrawAxis" ).DLGWidth(button_width)
         TagGroup ta_del = DLGCreatePushButton( "Remove Axis", "delete_axis" ).DLGWidth(button_width)
@@ -271,10 +271,49 @@ void DrawAxis( object self )
         
         TagGroup rr_group = DLGGroupItems( ta_group, pattern_box, rr_buttons ).DLGTableLayout( 1, 4, 0 )
         rr_box_items.DLGAddElement( rr_group )
-        rr_box_items.DLGAddElement( ice_button )
-        
+        //rr_box_items.DLGAddElement( ice_button )
+        rr_box_items.DLGAddElement( update_center_button )
         
         Dialog_UI.DLGAddElement( rr_box )
+        
+        // Checkboxes.
+        TagGroup rr_100, rr_4, rr_2, rr_1p4, rr_1, rr_0p8, rr_0p6
+        rr_4 = DLGCreateCheckBox( "4 A", 1 ).DLGIdentifier( "rr00" )
+        rr_2 = DLGCreateCheckBox( "2 A", 1 ).DLGIdentifier( "rr01" )
+        rr_1p4 = DLGCreateCheckBox( "1.4 A", 1 ).DLGIdentifier( "rr02" )
+        rr_1 = DLGCreateCheckBox( "1 A", 1 ).DLGIdentifier( "rr03" )
+        rr_0p8 = DLGCreateCheckBox( "0.8 A", 1 ).DLGIdentifier( "rr04" )
+        rr_0p6 = DLGCreateCheckBox( "0.6 A", 0 ).DLGIdentifier( "rr05" )
+        
+        
+        TagGroup rr_cb, cb_box, rr_cb_00, rr_cb_01
+        cb_box = DLGCreateBox( "Rings", rr_cb ).DLGFill( "XY" )
+        rr_cb_00 = DLGGroupItems( rr_4, rr_2, rr_1p4 ).DLGTableLayout( 3, 1, 0 ).DLGAnchor( "West" )
+        rr_cb_01 = DLGGroupItems( rr_1, rr_0p8, rr_0p6 ).DLGTableLayout( 3, 1, 0 ).DLGAnchor( "West" )
+        rr_cb = DLGGroupItems( rr_cb_00, rr_cb_01 ).DLGTableLayout( 1, 2, 0 ).DLGAnchor( "West" )
+        
+        
+        cb_box.DLGAddElement( rr_cb )
+        Dialog_UI.DLGAddElement( cb_box )
+        
+        // Ice rings checkboxes.
+        TagGroup ir_0, ir_1, ir_2, ir_3, ir_4
+        ir_0 = DLGCreateCheckBox( "3.78 A", 1 ).DLGIdentifier( "ir00" )
+        ir_1 = DLGCreateCheckBox( "2.23 A", 1 ).DLGIdentifier( "ir01" )
+        ir_2 = DLGCreateCheckBox( "1.93 A", 1 ).DLGIdentifier( "ir02" )
+        ir_3 = DLGCreateCheckBox( "1.47 A", 1 ).DLGIdentifier( "ir03" )
+        ir_4 = DLGCreateCheckBox( "1.31 A", 1 ).DLGIdentifier( "ir04" )
+        
+        TagGroup ir_cb, ir_box, ir_cb_00, ir_cb_01
+        ir_box = DLGCreateBox( "Ice Rings", ir_cb ).DLGFill( "XY" )
+        ir_cb_00 = DLGGroupItems( ir_0, ir_1, ir_2 ).DLGTableLayout( 3, 1, 0 ).DLGAnchor( "West" )
+        ir_cb_01 = DLGGroupItems( ir_3, ir_4 ).DLGTableLayout( 3, 1, 0 ).DLGAnchor( "West" )
+        ir_cb = DLGGroupItems( ir_cb_00, ir_cb_01 ).DLGTableLayout( 1, 2, 0 ).DLGAnchor( "West" )
+        
+        
+        ir_box.DLGAddElement( ir_cb )
+        Dialog_UI.DLGAddElement( ir_box )
+        
         
         TagGroup footer = DLGCreateLabel("GMED: AutoResRings")
         Dialog_UI.DLGAddElement(footer)
@@ -310,5 +349,5 @@ try
 }
 catch
 {
-	result("Error: please open an image first.")
+	Throw("Please open an image first.")
 }
