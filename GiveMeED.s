@@ -24,7 +24,49 @@ and it cannot accept a new command."
 Please report any issues to the GMED GitHub page.
 */
 	
-
+// Faux functions for offline development.
+/*
+number EMGetHighTension()
+{
+	return 0
+}
+number CameraGetActiveCameraID()
+{
+	return 0
+}
+number EMGetStageAlpha()
+{
+	return 0
+}
+number EMGetSpotSize()
+{
+	return 0
+}
+number CameraGetPixelSize( number x, number y, number z )
+{
+	return 0
+}
+number EMGetCameraLength()
+{
+	return 0
+}
+void EMSetStageAlpha( number x )
+{
+	return
+}
+void EMSetBeamBlanked( number x )
+{
+	return
+}
+void CM_InSitu_StartRecord( )
+{
+	return
+}
+void CM_InSitu_StopRecord( )
+{
+	return
+}
+*/
 // Calculate the wavelength given the accelerating voltage, in metres.
 number CalculateWavelength( number HT )
 {
@@ -55,8 +97,8 @@ void get_image_center( number &x, number &y )
 }
 // Function to store strings used to make CIFs.
 void cif_strings(string &microscope_name, string &camera_name, string &probe,\
-				string &source, string &TEM, string &detector, string &method, string &detector_details,\
-				string &extension )
+				string &source, string &TEM, string &detector, string &method,\
+				string &detector_details, string &extension )
 {
 	microscope_name = "'JEOL 2100Plus transmission electron microscope'"
 	camera_name = "'Gatan OneView'"
@@ -82,7 +124,6 @@ void get_microscope_state( number &HT, number &camid )
 {
 	HT = EMGetHighTension()
 	camid = CameraGetActiveCameraID()
-	//number spot_size = EMGetSpotSize()
 	return
 }
 void save_string_defaults( string &save_dir, string &name, string &path)
@@ -98,20 +139,21 @@ void save_string_defaults( string &save_dir, string &name, string &path)
 string program_name = "GiveMeED"
 number false = 0; number true = 1
 
-number alpha_start = -60 //start stage tilt
-number alpha_end = 60 //end stage tilt
-number exp_num = 0 // initial log file suffix
-number fiddle = 1.0 // tolerance in angle
-number cam_sleep = 0.001 // sync while loop
+number alpha_start = -60
+number alpha_end = 60
+number exp_num = 0
+number fiddle = 1.0
+number cam_sleep = 0.001
 number fileCheck = 1 
 number start_angle, end_angle 
 
 number time_1, time_2
 
 string save_dir, ISName, ISDataPath
-save_string_defaults( save_dir, ISName, ISDataPath )
 string sample_name = ISName
 string filename, saveName
+
+save_string_defaults( save_dir, ISName, ISDataPath )
 
 string notes = "[e.g. cryo 120 K]"
 
@@ -121,8 +163,8 @@ microscope_defaults( tilt_axis, camera_length, frame_rate )
 number HT, camid
 get_microscope_state( HT, camid )
 
-
-number lambda = CalculateWavelength( HT ) *1e10 // in Angstroms
+number lambda
+lambda = CalculateWavelength( HT ) *1e10 // in Angstroms
 
 number img_center_x, img_center_y
 get_image_center( img_center_x, img_center_y )
@@ -347,7 +389,7 @@ string format_metadata( string ISDataPath, string saveName, string notes, image 
 	"_gmed_collection_time " + total_time + "\n"+\
 	"_gmed_fps " + frame_rate + "\n"+\
 	"_gmed_exposure_secs " + 1/frame_rate + "\n"+\
-	"_gmed_total_frames : " + no_frames + "\n"+\
+	"_gmed_total_frames " + no_frames + "\n"+\
 	"_gmed_angle_per_frame " + abs( end_angle - start_angle ) / no_frames + "\n"+\
 	"_gmed_rotation_axis " + tilt_axis + "\n"+\
 	"_gmed_notes " + notes + "\n"+\
@@ -358,7 +400,8 @@ string format_metadata( string ISDataPath, string saveName, string notes, image 
 
 void CreateLogFile( string program_name, string fileName, string saveName, number camid,\
 				number time_1, number time_2, number end_angle, number start_angle, string notes,\
-				number fiddle, number cam_sleep, string ISDataPath, number frame_rate, number lambda, number tilt_axis )
+				number fiddle, number cam_sleep, string ISDataPath, number frame_rate, number lambda,\
+				number tilt_axis )
 {
 	// event timings
 	number total_time = CalcHighResSecondsBetween( time_1, time_2 )
@@ -401,7 +444,15 @@ void CreateLogFile( string program_name, string fileName, string saveName, numbe
 		result("Error: could not get number of frames in dataset.") 
 	}
 	
-	Tag3DEDData( program_name, start_angle, end_angle, total_time, frame_rate, notes, ISDataPath, ISName, tilt_axis )
+	Tag3DEDData( program_name,\
+				start_angle,\
+				end_angle,\
+				total_time,\
+				frame_rate,\
+				notes,\
+				ISDataPath,\
+				ISName,\
+				tilt_axis )
 }
 
 
@@ -457,40 +508,45 @@ void ContinousTilt( number fiddle, number alpha_start, number alpha_end, number 
 
 
 //// Resolution rings and Tilt Axis ////
-number ConvertToRecNM( number num2convert )
+number ConvertToRecNM( number in )
 { 
-	number convertednum = 1/(num2convert*0.1)
-	//result(num2convert + " A = " + convertednum + " nm-1" + "\n")
-	return convertednum
+	number out = 1/(in*0.1)
+	return out
 }
 //Create ROI
-ROI CreateResRing( number radlabel, number radius, number x, number y, number r, number g, number b )
+ROI CreateResRing( number radlabel, number radius, number x,\
+					number y, number r, number g, number b )
 {
 	ROI resRing = NewROI( )
 	ROISetCircle(resRing, x, y, radius)
 	image img := GetFrontImage()
 	ImageDisplay imgDisplay = img.ImageGetImageDisplay(0)
-	//imgDisplay.ImageDisplayAddROI( resRing )
-	
 	string label = radlabel + " A"
-	ROISetColor( resRing, r, g, b) //RBG in 0-1
+	//RBG in 0-1
+	ROISetColor( resRing, r, g, b)
 	if (radlabel != 100)
 		ROISetLabel( resRing, label )
 	ROISetMoveable( resRing, 0 )
 	ROISetVolatile( resRing, 0 )
 	ROISetRestrictToDisplay( resRing, 0 )
 	//ROISetName(resRing, radius )
-	
 	return resRing
 }
+// Using image object as a matrix.
 image resolution_rings := [1,6] : {
-	{100},
 	{4},
 	{2},
 	{1.4},
 	{1},
-	{0.8}//,
-	//{0.6}
+	{0.8},
+	{0.6}
+}
+image ice_rings := [1,5] : {
+	{3.78},
+	{2.228},
+	{1.93},
+	{1.47},
+	{1.31}
 }
 // Draw ROIs on front image.
 void draw_tilt_axis( number angle, number cent_x, number cent_y, image img )
@@ -509,7 +565,6 @@ void draw_tilt_axis( number angle, number cent_x, number cent_y, image img )
 	imgDisplay.ImageDisplayAddROI( tilt_axis )
 	
 	string label = "Tilt axis"
-	//ROISetLabel( tilt_axis, label )
 	ROISetMoveable( tilt_axis, 0 )
 	ROISetVolatile( tilt_axis, 0 )
 	number r, g, b
@@ -518,31 +573,113 @@ void draw_tilt_axis( number angle, number cent_x, number cent_y, image img )
 	g = 1
 	ROISetColor( tilt_axis, r, g, b )
 }
-void draw_resolution_rings( image img, number rval, number gval, number bval, number cent_x, number cent_y )
+// Draw Res Rings on front image.
+void GetROIDetails( number &scale, number &pixRadius, number ringRadius )
 {
-	ImageDisplay imgDisplay = img.ImageGetImageDisplay(0)
-	number array_length = ImageGetDimensionSize(Resolution_Rings, 1)//y dimentsion of array
-
-	ROI ring
-	for (number i = 0; i < array_length ; i++ )//less than length of array
-	{
-		try
-		{
-			number ringRadius = GetPixel(resolution_rings, 0, i )//element i of array (counts from 0)
-			number scale = ScaleInfo( )
-			number rawRadius = ConvertToRecNM( ringRadius )
-			number pixRadius = rawRadius / scale
-			ring = CreateResRing( ringRadius, pixRadius, cent_x, cent_y, rval, gval, bval )
-			imgDisplay.ImageDisplayAddROI( ring )
-		}
-		catch
-		{
-			result("something went wrong" + "\n")
-		}
-	}
-	CloseImage(Resolution_Rings)
+	scale = ScaleInfo( )
+	number rawRadius = ConvertToRecNM( ringRadius )
+	pixRadius = rawRadius / scale
+	return
 }
-
+void draw_ROI( ImageDisplay imgDisp, number scale, number ringRadius,\
+				number cent_x, number cent_y, number r, number g, number b )
+{
+	number pixRadius
+	ROI ring
+	GetROIDetails( scale, pixRadius, ringRadius )
+	ring = CreateResRing( ringRadius, pixRadius, cent_x, cent_y, r, g, b )
+	imgDisp.ImageDisplayAddROI( ring )
+}
+// Draw ROIs on image
+void draw( object ui, image img, number cent_x, number cent_y )
+{
+	number rr00, rr01, rr02, rr03, rr04, rr05
+	number ir00, ir01, ir02, ir03, ir04
+	//number ta00, tx_angle
+	
+	// Resolution rings.
+	ui.DLGGetValue( "rr00", rr00 )
+	ui.DLGGetValue( "rr01", rr01 )
+	ui.DLGGetValue( "rr02", rr02 )
+	ui.DLGGetValue( "rr03", rr03 )
+	ui.DLGGetValue( "rr04", rr04 )
+	ui.DLGGetValue( "rr05", rr05 )
+	// Ice rings.
+	ui.DLGGetValue( "ir00", ir00 )
+	ui.DLGGetValue( "ir01", ir01 )
+	ui.DLGGetValue( "ir02", ir02 )
+	ui.DLGGetValue( "ir03", ir03 )
+	ui.DLGGetValue( "ir04", ir04 )
+	
+	ImageDisplay imgDisplay = img.ImageGetImageDisplay(0)
+	number ringRadius
+	ROI ring
+	number rval, bval, gval
+	number scale
+	
+	rval = 1; bval = 0; gval = 0
+	scale = ScaleInfo()
+	
+	ringRadius = 100
+	draw_ROI( imgDisplay, scale, ringRadius, cent_x, cent_y, rval, gval, bval )	
+	if (rr00 == 1)
+	{
+		ringRadius = GetPixel(resolution_rings, 0, 0 )
+		draw_ROI( imgDisplay, scale, ringRadius, cent_x, cent_y, rval, gval, bval )	
+	}
+	if (rr01 == 1)
+	{
+		ringRadius = GetPixel(resolution_rings, 0, 1 )
+		draw_ROI( imgDisplay, scale, ringRadius, cent_x, cent_y, rval, gval, bval )	
+	}
+	if (rr02 == 1)
+	{
+		ringRadius = GetPixel(resolution_rings, 0, 2 )
+		draw_ROI( imgDisplay, scale, ringRadius, cent_x, cent_y, rval, gval, bval )	
+	}
+	if (rr03 == 1)
+	{
+		ringRadius = GetPixel(resolution_rings, 0, 3 )
+		draw_ROI( imgDisplay, scale, ringRadius, cent_x, cent_y, rval, gval, bval )	
+	}
+	if (rr04 == 1)
+	{
+		ringRadius = GetPixel(resolution_rings, 0, 4 )
+		draw_ROI( imgDisplay, scale, ringRadius, cent_x, cent_y, rval, gval, bval )	
+	}
+	if (rr05 == 1)
+	{
+		ringRadius = GetPixel(resolution_rings, 0, 5 )
+		draw_ROI( imgDisplay, scale, ringRadius, cent_x, cent_y, rval, gval, bval )	
+	}
+	// Draw ice rings.
+	rval = 0; bval = 1; gval = 0
+	if (ir00 == 1)
+	{
+		ringRadius = GetPixel(ice_rings, 0, 0 )
+		draw_ROI( imgDisplay, scale, ringRadius, cent_x, cent_y, rval, gval, bval )	
+	}
+	if (ir01 == 1)
+	{
+		ringRadius = GetPixel(ice_rings, 0, 1 )
+		draw_ROI( imgDisplay, scale, ringRadius, cent_x, cent_y, rval, gval, bval )	
+	}
+	if (ir02 == 1)
+	{
+		ringRadius = GetPixel(ice_rings, 0, 2 )
+		draw_ROI( imgDisplay, scale, ringRadius, cent_x, cent_y, rval, gval, bval )	
+	}
+	if (ir03 == 1)
+	{
+		ringRadius = GetPixel(ice_rings, 0, 3 )
+		draw_ROI( imgDisplay, scale, ringRadius, cent_x, cent_y, rval, gval, bval )	
+	}
+	if (ir04 == 1)
+	{
+		ringRadius = GetPixel(ice_rings, 0, 4 )
+		draw_ROI( imgDisplay, scale, ringRadius, cent_x, cent_y, rval, gval, bval )		
+	}
+}
 // Remove ROIs.
 void remove_ROIs( imageDisplay disp, number flag )
 {
@@ -561,6 +698,7 @@ void remove_ROIs( imageDisplay disp, number flag )
 		}
 }
 
+
 //// UI block ////
 // declare threads
 Class data_collection_thread : thread //controls data collection
@@ -577,12 +715,39 @@ Class data_collection_thread : thread //controls data collection
 	void SetLinkedDialogID( object self, number ID ) { linkedDLG_ID = ID; }
 	void RunThread( object self )
 	{
-		UniqueSaveName( save_dir, saveName, fileName, sample_name, ".cif", exp_num, fileCheck )
-		ContinousTilt( fiddle, alpha_start, alpha_end, end_angle, start_angle, time_1, time_2, cam_sleep, camera_length ) 
+		UniqueSaveName( save_dir,\
+						saveName,\
+						fileName,\
+						sample_name,\
+						".cif",\
+						exp_num,\
+						fileCheck )
+		ContinousTilt( fiddle,\
+						alpha_start,\
+						alpha_end,\
+						end_angle,\
+						start_angle,\
+						time_1,\
+						time_2,\
+						cam_sleep,\
+						camera_length ) 
 		// Pause to write IS data.
 		sleep(5.0)
-		CreateLogFile( program_name, fileName, saveName, camid, time_1, time_2, end_angle, start_angle,\
-		 notes, fiddle, cam_sleep, ISDataPath, frame_rate, lambda, tilt_axis ) 
+		CreateLogFile( program_name,\
+						fileName,\
+						saveName,\
+						camid,\
+						time_1,\
+						time_2,\
+						end_angle,\
+						start_angle,\
+						notes,\
+						fiddle,\
+						cam_sleep,\
+						ISDataPath,\
+						frame_rate,\
+						lambda,\
+						tilt_axis ) 
 	}
 }
 // declare UI elements
@@ -632,37 +797,64 @@ class myDialog : UIframe
 		self.DLGGetValue( "notes_field", notes ) 
 		self.DLGGetValue( "sample_name_field", ISName ) 
 		self.DLGGetValue( "ta_field", tilt_axis )
-		//run functions
+		// Functions.
 		result(save_dir + "\n")
-		string saveName = UniqueSaveName( save_dir, saveName, fileName, sample_name, ".cif", exp_num, fileCheck )
+		string saveName = UniqueSaveName( save_dir,\
+											saveName,\
+											fileName,\
+											sample_name,\
+											".cif",\
+											exp_num,\
+											fileCheck )
 		ISDataPath = save_dir + "\\" + ISName
-		//ISDataPath = save_dir + newName
 		result(saveName + "\n")
-		ContinousTilt( fiddle, alpha_start, alpha_end, end_angle, start_angle, time_1, time_2, cam_sleep, camera_length ) 
-		sleep(4.0)//pause to write IS data
-		CreateLogFile( program_name, fileName, saveName, camid, time_1, time_2, end_angle, start_angle, notes,\
-		 fiddle, cam_sleep, ISDataPath, frame_rate, lambda, tilt_axis ) 
-		//reset GUI
+		ContinousTilt( fiddle,\
+						alpha_start,\
+						alpha_end,\
+						end_angle,\
+						start_angle,\
+						time_1,\
+						time_2,\
+						cam_sleep,\
+						camera_length ) 
+		// Pause to write IS data.
+		sleep(4.0)
+		CreateLogFile( program_name,\
+						fileName,\
+						saveName,\
+						camid,\
+						time_1,\
+						time_2,\
+						end_angle,\
+						start_angle,\
+						notes,\
+						fiddle,\
+						cam_sleep,\
+						ISDataPath,\
+						frame_rate,\
+						lambda,\
+						tilt_axis ) 
+		//Reset GUI.
 		self.Setelementisenabled( "start_pressed", true )
 		self.Setelementisenabled( "reset_pressed", true )
 		self.Setelementisenabled( "stop_pressed", false )
 	}
-	void stop_pressed( object self )//end 3DED
+	void stop_pressed( object self )
 	{
-		EMSetBeamBlanked( true )//blank beam
+		EMSetBeamBlanked( true )
 		CM_InSitu_StopRecord( )
 		val = EMGetStageAlpha( )
 		self.Setelementisenabled( "start_pressed", true )
 		self.Setelementisenabled( "stop_pressed", false )
 		result( "Capture stopped by user" + "\n" )
 	}
-	void reset_pressed( object self )//reset stage
+	// Buttons for tilt control.
+	void reset_pressed( object self )
 	{
 		EMSetStageAlpha( 0 )
 		self.Setelementisenabled( "start_pressed", false )
 		self.Setelementisenabled( "stop_pressed", true )
 	}
-	// Buttons for tilt control.
 	void GoToAlpha1( object self )
 	{
 		number alpha_start
@@ -677,14 +869,11 @@ class myDialog : UIframe
 	}
 	// Buttons for resolution rings and tilt axis.
 	void DrawRings( object self )
-{
-	{ 
+	{
 		self.DLGGetValue( "x_cent", img_center_x )
 		self.DLGGetValue( "y_cent", img_center_y )
-	}
 		image img := GetFrontImage()
-		result(img_center_x)
-		draw_resolution_rings( img, 1, 0, 0, img_center_x, img_center_y )
+		draw( self, img, img_center_x, img_center_y )
 	}
 	void delete_rings( object self )
 	{
@@ -700,11 +889,17 @@ class myDialog : UIframe
 	}
 	void DrawAxis( object self )
 	{
-		{ 
-			self.DLGGetValue( "ta_field", tilt_axis )
-		}
-			image img := GetFrontImage()
-			draw_tilt_axis( tilt_axis, img_center_x, img_center_y, img )
+		self.DLGGetValue( "ta_field", tilt_axis )
+		image img := GetFrontImage()
+		draw_tilt_axis( tilt_axis, img_center_x, img_center_y, img )
+	}
+	void UpdateCenter( object self )
+	{
+		number x, y
+		get_image_center( x, y )
+	
+		self.DLGValue( "x_cent", x )
+		self.DLGValue( "y_cent", y )
 	}
   TagGroup CreateDLG( object self )
   {
@@ -714,111 +909,189 @@ class myDialog : UIframe
         TagGroup label
         TagGroup Dialog_UI = DLGCreateDialog("GiveMeED")
         
-        // Create a box for the setup parameters             
-        TagGroup setup_box_items
-        TagGroup setup_box = DLGCreateBox("Save Data Path", setup_box_items).DLGFill("XY")
-        // Work directory field
-        TagGroup path_field
+        // Box: "Save Data Path"       
+        TagGroup setup_box_items, setup_box, setup_group
+        setup_box = DLGCreateBox("Save Data Path",setup_box_items)\
+        .DLGFill("XY")
+        // Work directory field.
+        TagGroup path_field, path_group
         label = DLGCreateLabel("Path:").DLGWidth(label_width)
-        path_field = DLGCreateStringField(save_dir).DLGIdentifier("path_field").DLGWidth(entry_width*4)
-        TagGroup path_group = DLGGroupItems(label, path_field).DLGTableLayout(2, 1, 0)
-        // Sample name field
-        TagGroup sample_name_field
+        path_field = DLGCreateStringField(save_dir).DLGIdentifier("path_field")\
+        .DLGWidth(entry_width*4)
+        path_group = DLGGroupItems(label, path_field).DLGTableLayout(2, 1, 0)
+        // Sample name field.
+        TagGroup sample_name_field, sample_name_group
         label = DLGCreateLabel("Sample name:").DLGWidth(label_width)
-        sample_name_field = DLGCreateStringField(sample_name).DLGIdentifier("sample_name_field").DLGWidth(entry_width*4)
-        TagGroup sample_name_group = DLGGroupItems(label, sample_name_field).DLGTableLayout(2, 1, 0)
-		// Notes field
-		TagGroup notes_field
-        label = DLGCreateLabel("Notes:").DLGWidth(label_width)
-        notes_field = DLGCreateStringField(notes).DLGIdentifier("notes_field").DLGWidth(entry_width*4)
-        TagGroup notes_group = DLGGroupItems(label, notes_field).DLGTableLayout(2, 1, 0)
-        
-        // Buttons
-        TagGroup browse_button = DLGCreatePushButton("Browse files", "browse_files").DLGWidth(button_width)
-        TagGroup setup_group = DLGGroupItems(path_group, sample_name_group, browse_button).DLGTableLayout(1, 6, 0)
+        sample_name_field = DLGCreateStringField(sample_name)\
+        .DLGIdentifier("sample_name_field").DLGWidth(entry_width*4)
+        sample_name_group = DLGGroupItems(label, sample_name_field)\
+        .DLGTableLayout(2, 1, 0)
+        // Browse button.
+        TagGroup browse_button
+        browse_button = DLGCreatePushButton("Browse files", "browse_files")\
+        .DLGWidth(button_width)
+        // Create the box.
+        setup_group = DLGGroupItems(path_group, sample_name_group, browse_button)\
+        .DLGTableLayout(1, 6, 0)
         setup_box_items.DLGAddElement( setup_group )
         Dialog_UI.DLGAddElement( setup_box )
         
-        // Variables group
-        TagGroup variables_box_items
-        TagGroup variables_box = DLGCreateBox("Variables", variables_box_items).DLGFill("XY")
-        TagGroup wavelength_field
+        // Box: "Variables"
+        TagGroup variables_box_items, variables_box, variables_group
+        variables_box = DLGCreateBox("Variables", variables_box_items)\
+        .DLGFill("XY")
+        // Wavelength field.
+        TagGroup wavelength_field, wavelength_group
         label = DLGCreateLabel("Lambda / nm:").DLGWidth(label_width)
-        wavelength_field = DLGCreateStringField("0.00251").DLGIdentifier("wavelength_field").DLGWidth(entry_width*4)
-        TagGroup wavelength_group = DLGGroupItems(label, wavelength_field).DLGTableLayout(2, 1, 0)
-        TagGroup fps_field
+        wavelength_field = DLGCreateStringField("0.00251")\
+        .DLGIdentifier("wavelength_field").DLGWidth(entry_width*4)
+        wavelength_group = DLGGroupItems(label, wavelength_field)\
+        .DLGTableLayout(2, 1, 0)
+        // Frame rate field.
+        TagGroup fps_field, fps_group
         label = DLGCreateLabel("Frame rate:").DLGWidth(label_width)
-        fps_field = DLGCreateStringField("175").DLGIdentifier("fps_field").DLGWidth(entry_width*4)
-        TagGroup fps_group = DLGGroupItems(label, fps_field).DLGTableLayout(2, 1, 0)
-        TagGroup variables_group = DLGGroupItems( wavelength_group, fps_group, notes_group ).DLGTableLayout(1, 3, 0)//IS_name_group,
+        fps_field = DLGCreateStringField("175").DLGIdentifier("fps_field")\
+        .DLGWidth(entry_width*4)
+        fps_group = DLGGroupItems(label, fps_field).DLGTableLayout(2, 1, 0)
+        // Notes field.
+		TagGroup notes_field, notes_group
+        label = DLGCreateLabel("Notes:").DLGWidth(label_width)
+        notes_field = DLGCreateStringField(notes).DLGIdentifier("notes_field")\
+        .DLGWidth(entry_width*4)
+        notes_group = DLGGroupItems(label, notes_field).DLGTableLayout(2, 1, 0)
+        // Create the box.
+        variables_group = DLGGroupItems( wavelength_group, fps_group, notes_group )\
+        .DLGTableLayout(1, 3, 0)
         variables_box_items.DLGAddElement( variables_group )
         Dialog_UI.DLGAddElement( variables_box )
         
-        // Angles: alpha is tilt-x on a JEOL microscope
-        TagGroup alpha_box_items
-        TagGroup alpha_box = DLGCreateBox("Tilt Range", alpha_box_items).DLGFill("XY")
-        TagGroup alpha_1_field//start angle for tilt
+        // Box: "Tilt Range"
+        TagGroup alpha_box_items, alpha_box
+        alpha_box = DLGCreateBox("Tilt Range", alpha_box_items).DLGFill("XY")
+        // Start angle field.
+        TagGroup alpha_1_field, alpha_1_group
         label = DLGCreateLabel("Start Angle (deg):").DLGWidth(label_width*1.2)
-        alpha_1_field = DLGCreateStringField("-60").DLGIdentifier("alpha_1_field").DLGWidth(entry_width)
-        TagGroup alpha_1_group = DLGGroupItems(label, alpha_1_field).DLGTableLayout(2, 1, 0)
-        TagGroup alpha_2_field//end angle for tilt
+        alpha_1_field = DLGCreateStringField("-60").DLGIdentifier("alpha_1_field")\
+        .DLGWidth(entry_width)
+        alpha_1_group = DLGGroupItems(label, alpha_1_field).DLGTableLayout(2, 1, 0)
+        // End angle field.
+        TagGroup alpha_2_field, alpha_2_group
         label = DLGCreateLabel("End Angle (deg):").DLGWidth(label_width*1.2)
-        alpha_2_field = DLGCreateStringField("60").DLGIdentifier("alpha_2_field").DLGWidth(entry_width)
-        TagGroup alpha_2_group = DLGGroupItems(label, alpha_2_field).DLGTableLayout(2, 1, 0)
-        
-        //Alpha buttons
-        TagGroup GoToAlpha1 = DLGCreatePushButton( "Go to Start", "GoToAlpha1" ).DLGWidth(button_width)
-        TagGroup GoToAlpha2 = DLGCreatePushButton( "Go to End", "GoToAlpha2" ).DLGWidth(button_width)
-        TagGroup reset_button = DLGCreatePushButton("Tilt Neutral", "reset_pressed").DLGIdentifier("reset_button").DLGWidth(button_width)
-        TagGroup alpha_buttons = DLGGroupItems( GoToAlpha1,  reset_button, GoToAlpha2 ).DLGTableLayout( 3, 1, 0 ).DLGAnchor( "East" )
-        TagGroup alpha_group = DLGGroupItems( alpha_1_group, alpha_2_group, alpha_buttons ).DLGTableLayout( 1, 4, 0 )
+        alpha_2_field = DLGCreateStringField("60").DLGIdentifier("alpha_2_field")\
+        .DLGWidth(entry_width)
+        alpha_2_group = DLGGroupItems(label, alpha_2_field).DLGTableLayout(2, 1, 0)
+        // Buttons.
+        TagGroup GoToAlpha1, GoToAlpha2, reset_button
+        TagGroup alpha_buttons, alpha_group
+        GoToAlpha1 = DLGCreatePushButton( "Go to Start", "GoToAlpha1" )\
+        .DLGWidth(button_width)
+        GoToAlpha2 = DLGCreatePushButton( "Go to End", "GoToAlpha2" )\
+        .DLGWidth(button_width)
+        reset_button = DLGCreatePushButton("Tilt Neutral", "reset_pressed")\
+        .DLGIdentifier("reset_button").DLGWidth(button_width)
+        alpha_buttons = DLGGroupItems( GoToAlpha1,  reset_button, GoToAlpha2 )\
+        .DLGTableLayout( 3, 1, 0 ).DLGAnchor( "East" )
+        // Create the box.
+        alpha_group = DLGGroupItems( alpha_1_group, alpha_2_group, alpha_buttons )\
+        .DLGTableLayout( 1, 4, 0 )
         alpha_box_items.DLGAddElement( alpha_group )
         Dialog_UI.DLGAddElement( alpha_box )
         
-        // Resolution rings and tilt axis box.
-        TagGroup rr_box_items
-        TagGroup rr_box = DLGCreateBox( "Overlay", rr_box_items ).DLGFill( "XY" )
-        
-        TagGroup ta_field
+        // Box: "Tilt-axis"
+        TagGroup ta_box_items
+        TagGroup ta_box = DLGCreateBox( "Tilt-axis", ta_box_items ).DLGFill( "XY" )
+        // Tilt axis field.
+        TagGroup ta_field, ta_group
         label = DLGCreateLabel( "Tilt axis (deg):" ).DLGWidth( label_width*1.0 )
-        ta_field = DLGCreateStringField( "25.1" ).DLGIdentifier( "ta_field" ).DLGWidth( entry_width )
-        TagGroup ta_group = DLGGroupItems( label, ta_field ).DLGTableLayout( 2, 1, 0 ).DLGAnchor( "West" )
+        ta_field = DLGCreateStringField( "25.1" ).DLGIdentifier( "ta_field" )\
+        .DLGWidth( entry_width )
+        ta_group = DLGGroupItems( label, ta_field ).DLGTableLayout( 2, 1, 0 )\
+        .DLGAnchor( "Middle" )
+        // Buttons.
+        TagGroup ta_button, ta_del, ta_buttons
+        ta_button = DLGCreatePushButton( "Draw Axis", "DrawAxis" )\
+        .DLGWidth(button_width)
+        ta_del = DLGCreatePushButton( "Remove Axis", "delete_axis" )\
+        .DLGWidth(button_width)
+        ta_buttons = DLGGroupItems( ta_button, ta_del ).DLGTableLayout( 2, 2, 0 )\
+        .DLGAnchor( "Middle" )
+        // Create the box.
+        ta_box_items.DLGAddElement( ta_group )
+        ta_box_items.DLGAddElement( ta_buttons )
+        Dialog_UI.DLGAddElement( ta_box )
         
-        TagGroup x_cent, y_cent
+        
+        // Box: "Resolution rings"
+        TagGroup rr_box_items
+        TagGroup rr_box = DLGCreateBox( "Resolution rings", rr_box_items )\
+        .DLGFill( "XY" )
+        // Buttons.
+        TagGroup rr_button, rr_del
+        TagGroup rr_buttons, rr_group, update_button
+        update_button = DLGCreatePushButton( "Update X/Y", "UpdateCenter" )\
+        .DLGWidth(button_width)
+        rr_button = DLGCreatePushButton( "Draw Rings", "DrawRings" )\
+        .DLGWidth(button_width)
+        rr_del = DLGCreatePushButton( "Remove Rings", "delete_rings" )\
+        .DLGWidth(button_width)
+        rr_buttons = DLGGroupItems( rr_button, rr_del )\
+        .DLGTableLayout( 2, 2, 0 ).DLGAnchor( "Middle" )
+        // Image center field.
+        TagGroup x_cent, y_cent, pattern_box
         string center
         label = DLGCreateLabel( "Image Center X/Y (px):" ).DLGWidth( label_width*1.6 )
         center = BaseN(img_center_x, 10, 4)
-        x_cent = DLGCreateStringField( center ).DLGIdentifier( "x_cent" ).DLGWidth( entry_width )
+        x_cent = DLGCreateStringField( center )\
+        .DLGIdentifier( "x_cent" ).DLGWidth( entry_width )
         center = BaseN(img_center_y, 10, 4)
-        y_cent = DLGCreateStringField( center ).DLGIdentifier( "y_cent" ).DLGWidth( entry_width )
-        TagGroup pattern_box = DLGGroupItems( label, x_cent, y_cent ).DLGTableLayout( 3, 1, 0 ).DLGAnchor( "West" )
-        
-
-        TagGroup rrbutton = DLGCreatePushButton( "Draw Rings", "DrawRings" ).DLGWidth(button_width)
-        TagGroup rr_del = DLGCreatePushButton( "Remove Rings", "delete_rings" ).DLGWidth(button_width)
-        TagGroup tabutton = DLGCreatePushButton( "Draw Axis", "DrawAxis" ).DLGWidth(button_width)
-        TagGroup ta_del = DLGCreatePushButton( "Remove Axis", "delete_axis" ).DLGWidth(button_width)
-        TagGroup rr_buttons = DLGGroupItems( rrbutton, tabutton, rr_del, ta_del ).DLGTableLayout( 2, 2, 0 ).DLGAnchor( "Middle" )
-        
-        TagGroup rr_group = DLGGroupItems( ta_group, pattern_box, rr_buttons ).DLGTableLayout( 1, 4, 0 )
-        rr_box_items.DLGAddElement( rr_group )
+        y_cent = DLGCreateStringField( center )\
+        .DLGIdentifier( "y_cent" ).DLGWidth( entry_width )
+        pattern_box = DLGGroupItems( label, x_cent, y_cent )\
+        .DLGTableLayout( 3, 1, 0 ).DLGAnchor( "West" )
+        // Ring checkboxes.
+        TagGroup rr_100, rr_4, rr_2, rr_1p4, rr_1, rr_0p8, rr_0p6
+        rr_4 = DLGCreateCheckBox( "4.0 A", 1 ).DLGIdentifier( "rr00" )
+        rr_2 = DLGCreateCheckBox( "2.0 A", 1 ).DLGIdentifier( "rr01" )
+        rr_1p4 = DLGCreateCheckBox( "1.4 A", 1 ).DLGIdentifier( "rr02" )
+        rr_1 = DLGCreateCheckBox( "1.0 A", 1 ).DLGIdentifier( "rr03" )
+        rr_0p8 = DLGCreateCheckBox( "0.8 A", 1 ).DLGIdentifier( "rr04" )
+        rr_0p6 = DLGCreateCheckBox( "0.6 A", 0 ).DLGIdentifier( "rr05" )
+        // Rings.
+        TagGroup rr_cb, cb_box, rr_cb_00, rr_cb_01
+        cb_box = DLGCreateBox( "Rings", rr_cb ).DLGFill( "XY" )
+        rr_cb_00 = DLGGroupItems( rr_4, rr_2, rr_1p4 )\
+        .DLGTableLayout( 3, 1, 0 ).DLGAnchor( "Middle" )
+        rr_cb_01 = DLGGroupItems( rr_1, rr_0p8, rr_0p6 )\
+        .DLGTableLayout( 3, 1, 0 ).DLGAnchor( "Middle" )
+        rr_cb = DLGGroupItems( rr_cb_00, rr_cb_01 )\
+        .DLGTableLayout( 1, 2, 0 ).DLGAnchor( "Middle" )
+        // Create the box.
+        rr_group = DLGGroupItems( pattern_box, update_button, rr_cb)\
+        .DLGTableLayout( 1, 4, 0 )
+        rr_box_items.DLGAddElement( rr_group ).DLGTableLayout( 1, 5, 0 )
+        rr_box_items.DLGAddElement( rr_buttons ).DLGTableLayout( 2, 1, 0 )
         Dialog_UI.DLGAddElement( rr_box )
         
-        // Experiment control box
-        TagGroup control_box_items
-        TagGroup control_box = DLGCreateBox("Data Collection", control_box_items).DLGFill("XY")
-        TagGroup start_button = DLGCreatePushButton("Start 3DED", "start_pressed").DLGIdentifier("start_button").DLGWidth(button_width)
-        TagGroup stop_button = DLGCreatePushButton("Abort 3DED", "stop_pressed").DLGIdentifier("stop_button").DLGWidth(button_width)
-        
-        // Create the button box and contents
-        taggroup control_group = DLGGroupItems(start_button, stop_button).DLGTableLayout(3, 1, 0).DLGAnchor("Center").DLGExpand("X")
+        // Box: "Data Collection"
+        TagGroup control_box_items, control_box, start_3DED, stop_3DED
+        TagGroup control_group
+        control_box = DLGCreateBox("Data Collection", control_box_items)\
+        .DLGFill("XY")
+        start_3DED = DLGCreatePushButton("Start 3DED", "start_pressed")\
+        .DLGIdentifier("start_button").DLGWidth(button_width)
+        stop_3DED = DLGCreatePushButton("Abort 3DED", "stop_pressed")\
+        .DLGIdentifier("stop_button").DLGWidth(button_width)
+        // Create the box.
+        control_group = DLGGroupItems(start_3DED, stop_3DED)\
+        .DLGTableLayout(3, 1, 0).DLGAnchor("Center").DLGExpand("X")
         control_box_items.DLGAddElement(control_group)
         Dialog_UI.DLGAddElement(control_box)
+        
+        // Footer.
         TagGroup footer = DLGCreateLabel("GMED")
         Dialog_UI.DLGAddElement(footer)
         
         return Dialog_UI
-        
   }
   object Init(object self, number callThreadID )
   {
