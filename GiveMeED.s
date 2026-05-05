@@ -125,7 +125,16 @@ get_microscope_state( HT, camid )
 number lambda = CalculateWavelength( HT ) *1e10 // in Angstroms
 
 number img_center_x, img_center_y
-get_image_center( img_center_x, img_center_y )
+
+// Try-catch allows opening GMED when no image is open.
+try
+{
+	get_image_center( img_center_x, img_center_y )
+}
+catch
+{
+	result( "Please open image." )
+}
 
 
 // File handling functions.
@@ -347,7 +356,7 @@ string format_metadata( string ISDataPath, string saveName, string notes, image 
 	"_gmed_collection_time " + total_time + "\n"+\
 	"_gmed_fps " + frame_rate + "\n"+\
 	"_gmed_exposure_secs " + 1/frame_rate + "\n"+\
-	"_gmed_total_frames : " + no_frames + "\n"+\
+	"_gmed_total_frames " + no_frames + "\n"+\
 	"_gmed_angle_per_frame " + abs( end_angle - start_angle ) / no_frames + "\n"+\
 	"_gmed_rotation_axis " + tilt_axis + "\n"+\
 	"_gmed_notes " + notes + "\n"+\
@@ -714,106 +723,138 @@ class myDialog : UIframe
         TagGroup label
         TagGroup Dialog_UI = DLGCreateDialog("GiveMeED")
         
-        // Create a box for the setup parameters             
-        TagGroup setup_box_items
-        TagGroup setup_box = DLGCreateBox("Save Data Path", setup_box_items).DLGFill("XY")
-        // Work directory field
-        TagGroup path_field
+        // Box: "Save Data Path"       
+        TagGroup setup_box_items, setup_box, setup_group
+        setup_box = DLGCreateBox("Save Data Path", setup_box_items).DLGFill("XY")
+        // Work directory field.
+        TagGroup path_field, path_group
         label = DLGCreateLabel("Path:").DLGWidth(label_width)
         path_field = DLGCreateStringField(save_dir).DLGIdentifier("path_field").DLGWidth(entry_width*4)
-        TagGroup path_group = DLGGroupItems(label, path_field).DLGTableLayout(2, 1, 0)
-        // Sample name field
-        TagGroup sample_name_field
+        path_group = DLGGroupItems(label, path_field).DLGTableLayout(2, 1, 0)
+        // Sample name field.
+        TagGroup sample_name_field, sample_name_group
         label = DLGCreateLabel("Sample name:").DLGWidth(label_width)
         sample_name_field = DLGCreateStringField(sample_name).DLGIdentifier("sample_name_field").DLGWidth(entry_width*4)
-        TagGroup sample_name_group = DLGGroupItems(label, sample_name_field).DLGTableLayout(2, 1, 0)
-		// Notes field
-		TagGroup notes_field
-        label = DLGCreateLabel("Notes:").DLGWidth(label_width)
-        notes_field = DLGCreateStringField(notes).DLGIdentifier("notes_field").DLGWidth(entry_width*4)
-        TagGroup notes_group = DLGGroupItems(label, notes_field).DLGTableLayout(2, 1, 0)
-        
-        // Buttons
-        TagGroup browse_button = DLGCreatePushButton("Browse files", "browse_files").DLGWidth(button_width)
-        TagGroup setup_group = DLGGroupItems(path_group, sample_name_group, browse_button).DLGTableLayout(1, 6, 0)
+        sample_name_group = DLGGroupItems(label, sample_name_field).DLGTableLayout(2, 1, 0)
+        // Browse button.
+        TagGroup browse_button
+        browse_button = DLGCreatePushButton("Browse files", "browse_files").DLGWidth(button_width)
+        // Create the box.
+        setup_group = DLGGroupItems(path_group, sample_name_group, browse_button).DLGTableLayout(1, 6, 0)
         setup_box_items.DLGAddElement( setup_group )
         Dialog_UI.DLGAddElement( setup_box )
         
-        // Variables group
-        TagGroup variables_box_items
-        TagGroup variables_box = DLGCreateBox("Variables", variables_box_items).DLGFill("XY")
-        TagGroup wavelength_field
+        // Box: "Variables"
+        TagGroup variables_box_items, variables_box, variables_group
+        variables_box = DLGCreateBox("Variables", variables_box_items).DLGFill("XY")
+        // Wavelength field.
+        TagGroup wavelength_field, wavelength_group
         label = DLGCreateLabel("Lambda / nm:").DLGWidth(label_width)
         wavelength_field = DLGCreateStringField("0.00251").DLGIdentifier("wavelength_field").DLGWidth(entry_width*4)
-        TagGroup wavelength_group = DLGGroupItems(label, wavelength_field).DLGTableLayout(2, 1, 0)
-        TagGroup fps_field
+        wavelength_group = DLGGroupItems(label, wavelength_field).DLGTableLayout(2, 1, 0)
+        // Frame rate field.
+        TagGroup fps_field, fps_group
         label = DLGCreateLabel("Frame rate:").DLGWidth(label_width)
         fps_field = DLGCreateStringField("175").DLGIdentifier("fps_field").DLGWidth(entry_width*4)
-        TagGroup fps_group = DLGGroupItems(label, fps_field).DLGTableLayout(2, 1, 0)
-        TagGroup variables_group = DLGGroupItems( wavelength_group, fps_group, notes_group ).DLGTableLayout(1, 3, 0)//IS_name_group,
+        fps_group = DLGGroupItems(label, fps_field).DLGTableLayout(2, 1, 0)
+        // Notes field.
+		TagGroup notes_field, notes_group
+        label = DLGCreateLabel("Notes:").DLGWidth(label_width)
+        notes_field = DLGCreateStringField(notes).DLGIdentifier("notes_field").DLGWidth(entry_width*4)
+        notes_group = DLGGroupItems(label, notes_field).DLGTableLayout(2, 1, 0)
+        // Create the box.
+        variables_group = DLGGroupItems( wavelength_group, fps_group, notes_group ).DLGTableLayout(1, 3, 0)
         variables_box_items.DLGAddElement( variables_group )
         Dialog_UI.DLGAddElement( variables_box )
         
-        // Angles: alpha is tilt-x on a JEOL microscope
-        TagGroup alpha_box_items
-        TagGroup alpha_box = DLGCreateBox("Tilt Range", alpha_box_items).DLGFill("XY")
-        TagGroup alpha_1_field//start angle for tilt
+        // Box: "Tilt Range"
+        TagGroup alpha_box_items, alpha_box
+        alpha_box = DLGCreateBox("Tilt Range", alpha_box_items).DLGFill("XY")
+        // Start angle field.
+        TagGroup alpha_1_field, alpha_1_group
         label = DLGCreateLabel("Start Angle (deg):").DLGWidth(label_width*1.2)
         alpha_1_field = DLGCreateStringField("-60").DLGIdentifier("alpha_1_field").DLGWidth(entry_width)
-        TagGroup alpha_1_group = DLGGroupItems(label, alpha_1_field).DLGTableLayout(2, 1, 0)
-        TagGroup alpha_2_field//end angle for tilt
+        alpha_1_group = DLGGroupItems(label, alpha_1_field).DLGTableLayout(2, 1, 0)
+        // End angle field.
+        TagGroup alpha_2_field, alpha_2_group
         label = DLGCreateLabel("End Angle (deg):").DLGWidth(label_width*1.2)
         alpha_2_field = DLGCreateStringField("60").DLGIdentifier("alpha_2_field").DLGWidth(entry_width)
-        TagGroup alpha_2_group = DLGGroupItems(label, alpha_2_field).DLGTableLayout(2, 1, 0)
-        
-        //Alpha buttons
-        TagGroup GoToAlpha1 = DLGCreatePushButton( "Go to Start", "GoToAlpha1" ).DLGWidth(button_width)
-        TagGroup GoToAlpha2 = DLGCreatePushButton( "Go to End", "GoToAlpha2" ).DLGWidth(button_width)
-        TagGroup reset_button = DLGCreatePushButton("Tilt Neutral", "reset_pressed").DLGIdentifier("reset_button").DLGWidth(button_width)
-        TagGroup alpha_buttons = DLGGroupItems( GoToAlpha1,  reset_button, GoToAlpha2 ).DLGTableLayout( 3, 1, 0 ).DLGAnchor( "East" )
-        TagGroup alpha_group = DLGGroupItems( alpha_1_group, alpha_2_group, alpha_buttons ).DLGTableLayout( 1, 4, 0 )
+        alpha_2_group = DLGGroupItems(label, alpha_2_field).DLGTableLayout(2, 1, 0)
+        // Buttons.
+        TagGroup GoToAlpha1, GoToAlpha2, reset_button
+        TagGroup alpha_buttons, alpha_group
+        GoToAlpha1 = DLGCreatePushButton( "Go to Start", "GoToAlpha1" ).DLGWidth(button_width)
+        GoToAlpha2 = DLGCreatePushButton( "Go to End", "GoToAlpha2" ).DLGWidth(button_width)
+        reset_button = DLGCreatePushButton("Tilt Neutral", "reset_pressed").DLGIdentifier("reset_button").DLGWidth(button_width)
+        alpha_buttons = DLGGroupItems( GoToAlpha1,  reset_button, GoToAlpha2 ).DLGTableLayout( 3, 1, 0 ).DLGAnchor( "East" )
+        // Create the box.
+        alpha_group = DLGGroupItems( alpha_1_group, alpha_2_group, alpha_buttons ).DLGTableLayout( 1, 4, 0 )
         alpha_box_items.DLGAddElement( alpha_group )
         Dialog_UI.DLGAddElement( alpha_box )
         
-        // Resolution rings and tilt axis box.
+        // Box: "Overlay"
         TagGroup rr_box_items
         TagGroup rr_box = DLGCreateBox( "Overlay", rr_box_items ).DLGFill( "XY" )
-        
-        TagGroup ta_field
+        // Tilt axis field.
+        TagGroup ta_field, ta_group
         label = DLGCreateLabel( "Tilt axis (deg):" ).DLGWidth( label_width*1.0 )
         ta_field = DLGCreateStringField( "25.1" ).DLGIdentifier( "ta_field" ).DLGWidth( entry_width )
-        TagGroup ta_group = DLGGroupItems( label, ta_field ).DLGTableLayout( 2, 1, 0 ).DLGAnchor( "West" )
-        
-        TagGroup x_cent, y_cent
+        ta_group = DLGGroupItems( label, ta_field ).DLGTableLayout( 2, 1, 0 ).DLGAnchor( "Middle" )
+        // Image center field.
+        TagGroup x_cent, y_cent, pattern_box
         string center
         label = DLGCreateLabel( "Image Center X/Y (px):" ).DLGWidth( label_width*1.6 )
         center = BaseN(img_center_x, 10, 4)
         x_cent = DLGCreateStringField( center ).DLGIdentifier( "x_cent" ).DLGWidth( entry_width )
         center = BaseN(img_center_y, 10, 4)
         y_cent = DLGCreateStringField( center ).DLGIdentifier( "y_cent" ).DLGWidth( entry_width )
-        TagGroup pattern_box = DLGGroupItems( label, x_cent, y_cent ).DLGTableLayout( 3, 1, 0 ).DLGAnchor( "West" )
+        pattern_box = DLGGroupItems( label, x_cent, y_cent ).DLGTableLayout( 3, 1, 0 ).DLGAnchor( "West" )
+        // Buttons.
+        TagGroup rr_button, rr_del, ta_button, ta_del
+        TagGroup rr_buttons, rr_group, ta_buttons, update_button
+        update_button = DLGCreatePushButton( "Update X/Y", "UpdateCenter" ).DLGWidth(button_width)
+        rr_button = DLGCreatePushButton( "Draw Rings", "DrawRings" ).DLGWidth(button_width)
+        rr_del = DLGCreatePushButton( "Remove Rings", "delete_rings" ).DLGWidth(button_width)
+        ta_button = DLGCreatePushButton( "Draw Axis", "DrawAxis" ).DLGWidth(button_width)
+        ta_del = DLGCreatePushButton( "Remove Axis", "delete_axis" ).DLGWidth(button_width)
+        rr_buttons = DLGGroupItems( rr_button, rr_del ).DLGTableLayout( 2, 2, 0 ).DLGAnchor( "Middle" )
+        ta_buttons = DLGGroupItems( ta_button, ta_del ).DLGTableLayout( 2, 2, 0 ).DLGAnchor( "Middle" )
+        // Ring checkboxes.
+        TagGroup rr_100, rr_4, rr_2, rr_1p4, rr_1, rr_0p8, rr_0p6
+        rr_4 = DLGCreateCheckBox( "4.0 A", 1 ).DLGIdentifier( "rr00" )
+        rr_2 = DLGCreateCheckBox( "2.0 A", 1 ).DLGIdentifier( "rr01" )
+        rr_1p4 = DLGCreateCheckBox( "1.4 A", 1 ).DLGIdentifier( "rr02" )
+        rr_1 = DLGCreateCheckBox( "1.0 A", 1 ).DLGIdentifier( "rr03" )
+        rr_0p8 = DLGCreateCheckBox( "0.8 A", 1 ).DLGIdentifier( "rr04" )
+        rr_0p6 = DLGCreateCheckBox( "0.6 A", 0 ).DLGIdentifier( "rr05" )
+        // Rings.
+        TagGroup rr_cb, cb_box, rr_cb_00, rr_cb_01
+        cb_box = DLGCreateBox( "Rings", rr_cb ).DLGFill( "XY" )
+        rr_cb_00 = DLGGroupItems( rr_4, rr_2, rr_1p4 ).DLGTableLayout( 3, 1, 0 ).DLGAnchor( "West" )
+        rr_cb_01 = DLGGroupItems( rr_1, rr_0p8, rr_0p6 ).DLGTableLayout( 3, 1, 0 ).DLGAnchor( "West" )
+        rr_cb = DLGGroupItems( rr_cb_00, rr_cb_01 ).DLGTableLayout( 1, 2, 0 ).DLGAnchor( "West" )
         
-
-        TagGroup rrbutton = DLGCreatePushButton( "Draw Rings", "DrawRings" ).DLGWidth(button_width)
-        TagGroup rr_del = DLGCreatePushButton( "Remove Rings", "delete_rings" ).DLGWidth(button_width)
-        TagGroup tabutton = DLGCreatePushButton( "Draw Axis", "DrawAxis" ).DLGWidth(button_width)
-        TagGroup ta_del = DLGCreatePushButton( "Remove Axis", "delete_axis" ).DLGWidth(button_width)
-        TagGroup rr_buttons = DLGGroupItems( rrbutton, tabutton, rr_del, ta_del ).DLGTableLayout( 2, 2, 0 ).DLGAnchor( "Middle" )
         
-        TagGroup rr_group = DLGGroupItems( ta_group, pattern_box, rr_buttons ).DLGTableLayout( 1, 4, 0 )
-        rr_box_items.DLGAddElement( rr_group )
+        
+        // Create the box.
+        rr_group = DLGGroupItems( ta_group, pattern_box, update_button, rr_cb).DLGTableLayout( 1, 4, 0 )
+        rr_box_items.DLGAddElement( rr_group ).DLGTableLayout( 1, 5, 0 )
+        rr_group = DLGGroupItems( rr_buttons, ta_buttons ).DLGTableLayout( 1, 2, 0 )
+        rr_box_items.DLGAddElement( rr_group ).DLGTableLayout( 1, 5, 0 )
         Dialog_UI.DLGAddElement( rr_box )
         
-        // Experiment control box
-        TagGroup control_box_items
-        TagGroup control_box = DLGCreateBox("Data Collection", control_box_items).DLGFill("XY")
-        TagGroup start_button = DLGCreatePushButton("Start 3DED", "start_pressed").DLGIdentifier("start_button").DLGWidth(button_width)
-        TagGroup stop_button = DLGCreatePushButton("Abort 3DED", "stop_pressed").DLGIdentifier("stop_button").DLGWidth(button_width)
-        
-        // Create the button box and contents
-        taggroup control_group = DLGGroupItems(start_button, stop_button).DLGTableLayout(3, 1, 0).DLGAnchor("Center").DLGExpand("X")
+        // Box: "Data Collection"
+        TagGroup control_box_items, control_box, start_3DED, stop_3DED
+        TagGroup control_group
+        control_box = DLGCreateBox("Data Collection", control_box_items).DLGFill("XY")
+        start_3DED = DLGCreatePushButton("Start 3DED", "start_pressed").DLGIdentifier("start_button").DLGWidth(button_width)
+        stop_3DED = DLGCreatePushButton("Abort 3DED", "stop_pressed").DLGIdentifier("stop_button").DLGWidth(button_width)
+        // Create the box.
+        control_group = DLGGroupItems(start_3DED, stop_3DED).DLGTableLayout(3, 1, 0).DLGAnchor("Center").DLGExpand("X")
         control_box_items.DLGAddElement(control_group)
         Dialog_UI.DLGAddElement(control_box)
+        
+        // Footer.
         TagGroup footer = DLGCreateLabel("GMED")
         Dialog_UI.DLGAddElement(footer)
         

@@ -214,11 +214,20 @@ void remove_ROIs( imageDisplay disp, number flag )
 		}
 }
 
-image img := GetFrontImage()
+image img
 number axis_value
 number img_center_x, img_center_y
 
-GetImageCenter( img, img_center_x, img_center_y )
+
+if ( !GetFrontImage( img ) )
+{
+	result( "Please open image." )
+}
+else
+{
+	img := GetFrontImage()
+	GetImageCenter( img, img_center_x, img_center_y )
+}
 
 
 class ResRingsThread:Thread
@@ -324,7 +333,7 @@ void UpdateCenter( object self )
         rr_0p8 = DLGCreateCheckBox( "0.8 A", 1 ).DLGIdentifier( "rr04" )
         rr_0p6 = DLGCreateCheckBox( "0.6 A", 0 ).DLGIdentifier( "rr05" )
         
-        
+        // Rings.
         TagGroup rr_cb, cb_box, rr_cb_00, rr_cb_01
         cb_box = DLGCreateBox( "Rings", rr_cb ).DLGFill( "XY" )
         rr_cb_00 = DLGGroupItems( rr_4, rr_2, rr_1p4 ).DLGTableLayout( 3, 1, 0 ).DLGAnchor( "West" )
