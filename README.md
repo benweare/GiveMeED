@@ -5,8 +5,14 @@ GiveMeED is an automatic data collection solution for 3DED on transmission elect
 GiveMeED has been used successfully with a JEOL 2100Plus TEM with Gatan OneView Camera and JEOL 2100F TEM with Gatan K3 camera. It should work with any TEM using a Gatan camera that has “In-Situ” (video) mode and an installation of DigitalMicrograph. 
 
 ## Reference 
-These scripts are associated with the following publicatons, please include a citation in your own works if you found these scripts useful: 
+These scripts are associated with the following publicatons, please include a citation in your own works if you found these scripts useful:
 http://arxiv.org/abs/2507.10247
+
+## Requirements
+
+GiveMeED requires an installation of DigitalMicrograph (version 3.5 or higher) controlling a Gatan camera with InSitu recording mode (K3, OneView, etc). For offline usage, see the faux function library approach suggested by Dave Mitchell on his scripting website: http://www.dmscripting.com
+
+The export_insitu Python module requires an installation of DigitalMicrograph with Python scripting support (v. 3.5 or higher). The module should be installed to the conda environment used by DigitalMicrograph (see the DigitalMicrograph manual for how to customise the DigitalMicrograph conda environment).
 
 ## Installation
 
@@ -17,7 +23,6 @@ GiveMeED can be used in three ways:
 2) Installed as scripts, e.g. by using the supplied installation script within DigitalMicrograph.
 
 3) Installed as a plugin, either adding the supplied plugin to DigitalMicrograph or using the supplied script to create a plugin.
-
 
 Installing GiveMeED to DigitalMicrograph may be preferred.
 
@@ -42,9 +47,9 @@ Step-by-step instructions for GiveMeED:
 
 <img src="https://github.com/benweare/GiveMeED/blob/main/assets/GUI2.png" width="400" alt="ExportInSitu Graphical User Interface" />
 
-ExportInSitu provides a convienient way to convert DigitialMicrograph's InSitu file format to a format compatible with data reduction software. Currently PETS2 and DIALS formats are supported, but this could be easily extended in the future.
+ExportInSitu provides a convienient way to convert DigitialMicrograph's InSitu file format to a format compatible with data reduction software. Currently PETS2 and DIALS formats are supported, but this may be extended in the future.
 
-It works by opening the InSitu dataset in DigitalMicrograph as a stack. At this point the user may perform post-capture processing, such as binning or cropping. The dataset is then exported as a .dm4 stack, a directory of .tif files, or both. The experimental metadata is read from the CIF written by GiveMeED, which is used to write "import.phil" or .pets2 project. 
+ExportInSitu works by opening the InSitu dataset in DigitalMicrograph as a stack. At this point the user may perform any image processing they choose, such as binning or cropping. The dataset is then exported as a .dm4 stack, a directory of .tif files, or both. The experimental metadata is read from the CIF written by GiveMeED, which is used to write "import.phil" for DIALS or a .pets2 project for PETS2. 
 
 ExportInSitu uses the included Python module export_insitu. This can be installed into DigitalMicrograph's Python virtual environment, or the module can be imported at runtime by setting the path to the module location witin ExportInSitu.
 
@@ -55,3 +60,6 @@ ExportInSitu uses the included Python module export_insitu. This can be installe
 - ExportInSitu
 
 Some scripts are optionally available without a user interface. 
+
+## Contributing 
+Suggestions or feedback are welcome via GitHub, or contact me directly.
