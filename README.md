@@ -55,11 +55,10 @@ ExportInSitu uses the included Python module export_insitu. This can be installe
 
 ## List of Scripts 
 - GiveMeED
-- AutoResRings
 - GMED_installer
 - ExportInSitu
-
-Some scripts are optionally available without a user interface. 
+- Go2Alpha
+- AutoResRings
 
 ## Contributing 
 Suggestions or feedback are welcome via GitHub, or contact me directly.

@@ -1,10 +1,16 @@
 /*
 GiveMeElectronDiffraction
-B L Weare, @NMRC
 
-Associated preprint for greater context: http://arxiv.org/abs/2507.10247
+GiveMeElectron Diffraction (GMED) is a DigitalMicrograph script
+for collecting 3DED data.
+
+Author: B L Weare (2026) 
+URL: https://github.com/benweare/GiveMeED
+
+Associated preprint: http://arxiv.org/abs/2507.10247
 Please consider citing if you found this script useful.
 
+This script can be used as is, or installed to DM.
 
 Known errors:
 - "Could not get number of frames in dataset."
@@ -22,6 +28,8 @@ and it cannot accept a new command."
 	Affets DM versions 3.5 and 3.6, issue with DigitalMicrograph.
 	
 Please report any issues to the GMED GitHub page.
+
+Distributed under a GPL-3.0 license.
 */
 	
 // Faux functions for offline development.
