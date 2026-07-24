@@ -6,7 +6,8 @@ GiveMeED has been used successfully with a JEOL 2100Plus TEM with Gatan OneView 
 
 ## Reference 
 These scripts are associated with the following publicatons, please include a citation in your own works if you found these scripts useful:
-http://arxiv.org/abs/2507.10247
+- Journal article: Weare, B. L., Fung, K. L. Y., Cardillo-Zallo, I., Cull, W. J., Fay, M. W., Argent, S. P., & Brown, P. D. (2026). Practical crystallography with a transmission electron microscope. Journal of Microscopy, 1–14. https://doi.org/10.1111/jmi.70151
+- Arxiv preprint: http://arxiv.org/abs/2507.10247
 
 ## Requirements
 
