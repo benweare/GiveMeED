@@ -7,7 +7,8 @@ for collecting 3DED data.
 Author: B L Weare (2026) 
 URL: https://github.com/benweare/GiveMeED
 
-Associated preprint: http://arxiv.org/abs/2507.10247
+See the published article for more information:  https://doi.org/10.1111/jmi.70151
+Preprint: http://arxiv.org/abs/2507.10247
 Please consider citing if you found this script useful.
 
 This script can be used as is, or installed to DM.
@@ -108,6 +109,7 @@ void cif_strings(string &microscope_name, string &camera_name, string &probe,\
 				string &source, string &TEM, string &detector, string &method,\
 				string &detector_details, string &extension )
 {
+	// Edit these values to match your own instrument.
 	microscope_name = "'JEOL 2100Plus transmission electron microscope'"
 	camera_name = "'Gatan OneView'"
 	probe = "'electron'"
@@ -449,7 +451,7 @@ void CreateLogFile( string program_name, string fileName, string saveName, numbe
 	
 	if (no_frames == -1)
 	{ 
-		result("Error: could not get number of frames in dataset.") 
+		result("\nError: could not get number of frames in dataset.") 
 	}
 	
 	Tag3DEDData( program_name,\
